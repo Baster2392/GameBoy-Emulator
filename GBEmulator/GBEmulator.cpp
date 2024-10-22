@@ -1,13 +1,15 @@
 ﻿#include <iostream>
 #include <cstddef>
 #include <cstdint>
+#include "CPU.h"
 
 using namespace std;
 
 int main()
 {
-	uint16_t a = 1000;
-	uint8_t b = -255;
-	uint16_t c = a + uint16_t(b) + 0xFF00;
-	printf("a=%d b=%d a+b=%d", a, b, c);
+	CPU cpu = CPU();
+	cpu.A = 10;
+	cpu.B = 10;
+	cpu.ADD_A_r8(cpu.B);
+	printf("A=%d", cpu.A);
 }

@@ -129,10 +129,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="GBEmulator.cpp" />
-    <ClCompile Include="GPU.cpp" />
+    <ClCompile Include="CPU.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GPU.h" />
+    <ClInclude Include="CPU.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
