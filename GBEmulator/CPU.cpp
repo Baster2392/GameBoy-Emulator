@@ -12,10 +12,10 @@ void CPU::executeOpcode(std::uint8_t opcode)
 		STOP();
 		break;
 	case 0x20:
-		JR_NZ_e8();
+		JR_cc_e8(NZ_flag());
 		break;
 	case 0x30:
-		JR_NC_e8();
+		JR_cc_e8(NC_flag());
 		break;
 	case 0x40: // LD B,B = NOP
 		NOP();
@@ -42,10 +42,10 @@ void CPU::executeOpcode(std::uint8_t opcode)
 		OR_A_r8(this->B);
 		break;
 	case 0xC0:
-		RET_NZ();
+		RET_cc(NZ_flag());
 		break;
 	case 0xD0:
-		RET_NC();
+		RET_cc(NC_flag());
 		break;
 	case 0xE0:
 		LDH_a8_A();
@@ -138,10 +138,10 @@ void CPU::executeOpcode(std::uint8_t opcode)
 		OR_A_r8(this->D);
 		break;
 	case 0xC2:
-		JP_NZ_a16();
+		JP_cc_a16(NZ_flag());
 		break;
 	case 0xD2:
-		JP_NC_a16();
+		JP_cc_a16(NC_flag());
 		break;
 	case 0xE2:
 		break;	// LD [C], A ???
@@ -225,10 +225,10 @@ void CPU::executeOpcode(std::uint8_t opcode)
 		OR_A_r8(this->H);
 		break;
 	case 0xC4:
-		CALL_NZ_a16();
+		CALL_cc_a16(NZ_flag());
 		break;
 	case 0xD4:
-		CALL_NC_a16();
+		CALL_cc_a16(NC_flag());
 		break;
 	case 0x5:
 		DEC_r8(&(this->B));
@@ -374,26 +374,73 @@ void CPU::executeOpcode(std::uint8_t opcode)
 	case 0xF7:
 		RST(0x30);
 		break;
+	case 0x8:
+		LD_a16_r16(this->SP);
+		break;
+	case 0x18:
+		JR_e8();
+		break;
+	case 0x28:
+		JR_cc_e8(Z_flag());
+		break;
+	case 0x38:
+		JR_cc_e8(C_flag());
+		break;
+	case 0x48:
+		LD_r8_r8(&(this->C), &(this->B));
+		break;
+	case 0x58:
+		LD_r8_r8(&(this->E), &(this->B));
+		break;
+	case 0x68:
+		LD_r8_r8(&(this->L), &(this->B));
+		break;
+	case 0x78:
+		LD_r8_r8(&(this->A), &(this->B));
+		break;
+	case 0x88:
+		ADC_A_r8(this->B);
+		break;
+	case 0x98:
+		SBC_A_r8(this->B);
+		break;
+	case 0xA8:
+		XOR_A_r8(this->B);
+		break;
+	case 0xB8:
+		CP_A_r8(this->B);
+		break;
+	case 0xC8:
+		RET_cc(Z_flag());
+		break;
+	case 0xD8:
+		RET_cc(C_flag());
+		break;
+	case 0xE8:
+		ADD_SP_e8();
+		break;
+	case 0xF8:
+		LD_HL_SPe8();
+		break;
 	default:
+		printf("Not supported opcode.\n");
 		break;
 	}
 }
 
 std::uint8_t CPU::readMemory(std::uint16_t addressToRead)
 {
-	// TODO: read memory
-	return std::uint8_t();
+	return mmu.read_memory(addressToRead);
 }
 
 std::uint8_t CPU::readInstruction(std::uint16_t addressToRead)
 {
-	// TODO: read intruction
-	return std::uint8_t();
+	return mmu.read_memory(addressToRead);
 }
 
 void CPU::writeMemory(std::uint16_t addressToWrite, std::uint8_t value)
 {
-	// TODO: write value to memory
+	mmu.write_memory(addressToWrite, value);
 }
 
 void CPU::setFlag(char flag, bool value)
@@ -438,6 +485,15 @@ void CPU::setFlag(char flag, bool value)
 			break;
 		}
 	}
+}
+
+void CPU::step()
+{
+	uint8_t opcode = readInstruction(this->PC);
+	this->PC++;
+	printf("Executing opcode %x...\n", opcode);
+	executeOpcode(opcode);
+	printf("Executed.\n");
 }
 
 bool CPU::Z_flag()
@@ -485,26 +541,19 @@ void CPU::NOP()
 	this->cycles += 4;
 }
 
+void CPU::SCF()
+{
+	// TODO
+}
+
 void CPU::STOP()
 {
 	this->cycles += 0; // idk
 }
 
-void CPU::JR_NZ_e8()
+void CPU::JR_cc_e8(bool cc)
 {
-	if (NZ_flag())
-	{
-		JR_e8();
-	}
-	else
-	{
-		this->cycles += 8;
-	}
-}
-
-void CPU::JR_NC_e8()
-{
-	if (NC_flag())
+	if (cc)
 	{
 		JR_e8();
 	}
@@ -525,23 +574,11 @@ void CPU::JP_a16()
 	this->cycles += 16;
 }
 
-void CPU::JP_NZ_a16()
+void CPU::JP_cc_a16(bool cc)
 {
-	if (NZ_flag())
+	if (cc)
 	{
-		JP_a16();	// cycles updated in this instruction
-	}
-	else
-	{
-		this->cycles += 12;
-	}
-}
-
-void CPU::JP_NC_a16()
-{
-	if (NC_flag())
-	{
-		JP_a16();	// cycles updated in this instruction
+		JP_a16();
 	}
 	else
 	{
@@ -565,11 +602,11 @@ void CPU::CALL()
 	this->cycles += 24;
 }
 
-void CPU::CALL_NZ_a16()
+void CPU::CALL_cc_a16(bool cc)
 {
-	if (NZ_flag())
+	if (cc)
 	{
-		CALL();	// cycles updated in this instruction
+		CALL();
 	}
 	else
 	{
@@ -577,16 +614,9 @@ void CPU::CALL_NZ_a16()
 	}
 }
 
-void CPU::CALL_NC_a16()
+void CPU::RST(std::uint16_t vectorAddress)
 {
-	if (NC_flag())
-	{
-		CALL();	// cycles updated in this instruction
-	}
-	else
-	{
-		this->cycles += 12;
-	}
+	// TODO
 }
 
 void CPU::RLC_r8(std::uint8_t* reg)
@@ -596,7 +626,7 @@ void CPU::RLC_r8(std::uint8_t* reg)
 	setFlag('N', false);
 	setFlag('H', false);
 	setFlag('C', value >= 0b10000000);
-	value << 1;
+	value <<= 1;
 	value += C_flag();
 	*reg = value;
 
@@ -606,7 +636,7 @@ void CPU::RLC_r8(std::uint8_t* reg)
 void CPU::RL_r8(std::uint8_t* reg)
 {
 	uint8_t value = *reg;
-	value << 1;
+	value <<= 1;
 	value += C_flag();
 	setFlag('Z', false);
 	setFlag('N', false);
@@ -615,6 +645,36 @@ void CPU::RL_r8(std::uint8_t* reg)
 	*reg = value;
 
 	this->cycles += 4;
+}
+
+void CPU::CCF()
+{
+	// TODO
+}
+
+void CPU::CPL()
+{
+	// TODO
+}
+
+void CPU::DAA()
+{
+	// TODO
+}
+
+void CPU::DI()
+{
+	// TODO
+}
+
+void CPU::EI()
+{
+	// TODO
+}
+
+void CPU::HALT()
+{
+	// TODO
 }
 
 void CPU::LD_r8_r8(std::uint8_t* reg1, std::uint8_t* reg2)
@@ -672,6 +732,26 @@ void CPU::ADD_A_n8()
 
 	this->A += value;
 	this->cycles += 8;
+}
+
+void CPU::ADD_SP_e8()
+{
+	int8_t value = readInstruction(this->PC);
+	this->PC++;
+
+	// set flags
+	setFlag('Z', false);
+	setFlag('N', false);
+	setFlag('H', ((this->SP & 0x0F) + (value & 0x0F)) > 0x0F);
+	setFlag('C', uint16_t(this->SP + value) > 0xFF);
+
+	this->SP += value;
+	this->cycles += 16;
+}
+
+void CPU::ADD_HL_r8r8(std::uint8_t* reg1, std::uint8_t* reg2)
+{
+
 }
 
 void CPU::SUB_A_r8(std::uint8_t reg)
@@ -783,6 +863,192 @@ void CPU::OR_A_ar8r8(std::uint8_t* reg1, std::uint8_t* reg2)
 
 	this->A |= value;
 	this->cycles += 4;
+}
+
+void CPU::OR_A_n8()
+{
+	uint8_t value = readInstruction(this->PC);
+	this->PC++;
+
+	// set flags
+	setFlag('Z', (this->A | value) == 0);
+	setFlag('N', false);
+	setFlag('H', false);
+	setFlag('C', false);
+
+	this->A |= value;
+	this->cycles += 8;
+}
+
+void CPU::XOR_A_r8(std::uint8_t reg)
+{
+	// set flags
+	setFlag('Z', (this->A ^ reg) == 0);
+	setFlag('N', false);
+	setFlag('H', false);
+	setFlag('C', false);
+
+	this->A ^= reg;
+	this->cycles += 4;
+}
+
+void CPU::XOR_A_ar8r8(std::uint8_t* reg1, std::uint8_t* reg2)
+{
+	uint16_t address = (uint16_t(*reg1) << 8) + uint16_t(*reg2);
+	uint8_t value = readMemory(address);
+
+	// set flags
+	setFlag('Z', (this->A ^ value) == 0);
+	setFlag('N', false);
+	setFlag('H', false);
+	setFlag('C', false);
+
+	this->A ^= value;
+	this->cycles += 4;
+}
+
+void CPU::XOR_A_n8()
+{
+	uint8_t value = readInstruction(this->PC);
+	this->PC++;
+
+	// set flags
+	setFlag('Z', (this->A ^ value) == 0);
+	setFlag('N', false);
+	setFlag('H', false);
+	setFlag('C', false);
+
+	this->A ^= value;
+	this->cycles += 8;
+}
+
+void CPU::ADC_A_r8(std::uint8_t reg)
+{
+	// set flags
+	bool cf = C_flag();
+	setFlag('Z', this->A + reg + cf == 0);
+	setFlag('N', false);
+	setFlag('H', ((this->A & 0x0F) + ((reg + cf) & 0x0F)) > 0x0F);
+	setFlag('C', (uint16_t(this->A) + uint16_t(reg)) + cf > 0xFF);
+
+	this->A += reg + cf;
+	this->cycles += 4;
+}
+
+void CPU::ADC_A_ar8r8(std::uint8_t reg1, std::uint8_t reg2)
+{
+	uint16_t address = (uint16_t(reg1) << 8) + uint16_t(reg2);
+	uint8_t value = readMemory(address);
+
+	// set flags
+	bool cf = C_flag();
+	setFlag('Z', this->A + value + cf == 0);
+	setFlag('N', false);
+	setFlag('H', ((this->A & 0x0F) + ((value + cf) & 0x0F)) > 0x0F);
+	setFlag('C', (uint16_t(this->A) + uint16_t(value)) + cf > 0xFF);
+
+	this->A += value + cf;
+	this->cycles += 8;
+}
+
+void CPU::ADC_A_n8()
+{
+	uint8_t value = readInstruction(this->PC);
+	this->PC++;
+
+	// set flags
+	bool cf = C_flag();
+	setFlag('Z', this->A + value + cf == 0);
+	setFlag('N', false);
+	setFlag('H', ((this->A & 0x0F) + ((value + cf) & 0x0F)) > 0x0F);
+	setFlag('C', (uint16_t(this->A) + uint16_t(value)) + cf > 0xFF);
+
+	this->A += value + cf;
+	this->cycles += 8;
+}
+
+void CPU::SBC_A_r8(std::uint8_t reg)
+{
+	// set flags
+	bool cf = C_flag();
+	setFlag('Z', this->A - reg - cf == 0);
+	setFlag('N', true);
+	setFlag('H', ((this->A & 0x0F) < ((reg - cf) & 0x0F)));
+	setFlag('C', this->A < reg);
+
+	this->A -= reg + cf;
+	this->cycles += 4;
+}
+
+void CPU::SBC_A_ar8r8(std::uint8_t reg1, std::uint8_t reg2)
+{
+	uint16_t address = (uint16_t(reg1) << 8) + uint16_t(reg2);
+	uint8_t value = readMemory(address);
+
+	// set flags
+	bool cf = C_flag();
+	setFlag('Z', this->A - value - cf == 0);
+	setFlag('N', true);
+	setFlag('H', ((this->A & 0x0F) < ((value - cf) & 0x0F)));
+	setFlag('C', this->A < value);
+
+	this->A -= value + cf;
+	this->cycles += 8;
+}
+
+void CPU::SBC_A_n8()
+{
+	uint8_t value = readInstruction(this->PC);
+	this->PC++;
+
+	// set flags
+	bool cf = C_flag();
+	setFlag('Z', this->A - value - cf == 0);
+	setFlag('N', true);
+	setFlag('H', ((this->A & 0x0F) < ((value - cf) & 0x0F)));
+	setFlag('C', this->A < value);
+
+	this->A -= value + cf;
+	this->cycles += 8;
+}
+
+void CPU::CP_A_r8(std::uint8_t reg)
+{
+	// set flags
+	setFlag('Z', this->A - reg == 0);
+	setFlag('N', true);
+	setFlag('H', ((this->A & 0x0F) < (reg & 0x0F)));
+	setFlag('C', this->A < reg);
+
+	this->cycles += 4;
+}
+
+void CPU::CP_A_ar8r8(std::uint8_t reg1, std::uint8_t reg2)
+{
+	uint16_t address = (uint16_t(reg1) << 8) + uint16_t(reg2);
+	uint8_t value = readMemory(address);
+
+	// set flags
+	setFlag('Z', this->A - value == 0);
+	setFlag('N', true);
+	setFlag('H', ((this->A & 0x0F) < (value & 0x0F)));
+	setFlag('C', this->A < value);
+
+	this->cycles += 8;
+}
+
+void CPU::CP_A_n8()
+{
+	uint8_t value = readInstruction(this->PC);
+	this->PC++;
+
+	// set flags
+	setFlag('Z', this->A - value == 0);
+	setFlag('N', true);
+	setFlag('H', ((this->A & 0x0F) < (value & 0x0F)));
+	setFlag('C', this->A < value);
+
+	this->cycles += 8;
 }
 
 void CPU::INC_r8(std::uint8_t* reg)
@@ -912,29 +1178,12 @@ void CPU::RET()
 	this->cycles += 16;
 }
 
-void CPU::RET_NZ()
+void CPU::RET_cc(bool cc)
 {
-	if (NZ_flag())
+	if (cc)
 	{
 		RET();
 		this->cycles += 4;
-	}
-	else
-	{
-		this->cycles += 8;
-	}
-}
-
-void CPU::RET_NC()
-{
-	if (NC_flag())
-	{
-		RET();
-		this->cycles += 4;
-	}
-	else
-	{
-		this->cycles += 8;
 	}
 }
 
@@ -1043,19 +1292,49 @@ void CPU::LD_ar8r8_r8(std::uint8_t* areg1, std::uint8_t* areg2, std::uint8_t reg
 	this->cycles += 8;
 }
 
+void CPU::LD_a16_r16(uint16_t reg)
+{
+	// read address from instruction set
+	uint16_t address = readInstruction(this->PC);
+	this->PC++;
+	address += uint16_t(readInstruction(this->PC)) << 8;
+	this->PC++;
+
+	writeMemory(address, uint8_t(reg >> 8));	// high
+	address--;
+	writeMemory(address, uint8_t(reg & 0xFF));	// low
+
+	this->cycles += 20;
+}
+
+void CPU::LD_HL_SPe8()
+{
+	// read address from instruction set
+	int8_t e8 = readInstruction(this->PC);
+	this->PC++;
+
+	// set flags
+	setFlag('Z', this->A + e8 == 0);
+	setFlag('N', false);
+	setFlag('H', ((this->A & 0x0F) + (e8 & 0x0F)) > 0x0F);
+	setFlag('C', (uint16_t(this->A) + int16_t(e8)) > 0xFF);
+
+	uint16_t value = this->SP + e8;
+	uint8_t low = (value & 0xFF);
+	uint8_t high = value >> 8;
+
+	this->L = low;
+	this->H = high;
+
+	this->cycles += 12;
+}
+
 void CPU::JR_e8()
 {
-	uint8_t offset = readInstruction(this->PC); // read signed offset
+	int8_t offset = readInstruction(this->PC); // read signed offset
 	this->PC++;
 	
-	if (offset >= 0b10000000) // if sign bit is 1
-	{
-		this->PC += uint16_t(offset) + 0xFF00;
-	}
-	else
-	{
-		this->PC += uint16_t(offset);
-	}
+	this->PC += offset;
 
 	this->cycles += 12;
 }

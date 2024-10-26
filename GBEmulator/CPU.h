@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include "MMU.h"
 
 class CPU
 {
@@ -23,6 +24,9 @@ public:
 	// cycles counter
 	int cycles;
 
+	// Memory Management Unit
+	MMU mmu;
+
 	void executeOpcode(std::uint8_t opcode);
 	std::uint8_t readMemory(std::uint16_t addressToRead);
 	std::uint8_t readInstruction(std::uint16_t addressToRead);
@@ -32,6 +36,8 @@ public:
 		'Z', 'N', 'H', 'C'
 	*/
 	void setFlag(char flag, bool value);
+
+	void step();
 
 	// check flags
 
@@ -60,6 +66,21 @@ public:
 		Add the immediate value n8 to A.
 	*/
 	void ADD_A_n8();
+
+	/*
+		Add the signed value e8 to SP.
+	*/
+	void ADD_SP_e8();
+
+	/*
+		Add the value in r8r8 to HL.
+	*/
+	void ADD_HL_r8r8(std::uint8_t* reg1, std::uint8_t* reg2);
+
+	/*
+		Add the value in r16 to HL.
+	*/
+	void ADD_HL_r16(std::uint16_t* reg);
 
 	/*
 		Subtract the value in r8 from A.
@@ -105,6 +126,66 @@ public:
 		Bitwise OR between the immediate value n8 and A.
 	*/
 	void OR_A_n8();
+
+	/*
+		Store into A the bitwise XOR of the value in r8 and A.
+	*/
+	void XOR_A_r8(std::uint8_t reg);
+
+	/*
+		Bitwise XOR between the value in memory pointed by reg1reg2 and A.
+	*/
+	void XOR_A_ar8r8(std::uint8_t* reg1, std::uint8_t* reg2);
+
+	/*
+		Bitwise XOR between the immediate value n8 and A.
+	*/
+	void XOR_A_n8();
+
+	/*
+		Add the value in r8 plus the carry flag to A.
+	*/
+	void ADC_A_r8(std::uint8_t reg);
+
+	/*
+		Add the value in memory pointed by ar8r8 plus the carry flag to A.
+	*/
+	void ADC_A_ar8r8(std::uint8_t reg1, std::uint8_t reg2);
+
+	/*
+		Add the value n8 plus the carry flag to A.
+	*/
+	void ADC_A_n8();
+
+	/*
+		Subtract the value in r8 minus the carry flag to A.
+	*/
+	void SBC_A_r8(std::uint8_t reg);
+
+	/*
+		Subtract the value in memory pointed by ar8r8 minus the carry flag to A.
+	*/
+	void SBC_A_ar8r8(std::uint8_t reg1, std::uint8_t reg2);
+
+	/*
+		Subtract the value n8 minuus the carry flag to A.
+	*/
+	void SBC_A_n8();
+
+	/*
+		Subtract the value in r8 but not store it in A register.
+	*/
+	void CP_A_r8(std::uint8_t reg);
+
+	/*
+		Subtract the value in memory pointed by ar8r8 but not store it in A register.
+	*/
+	void CP_A_ar8r8(std::uint8_t reg1, std::uint8_t reg2);
+
+	/*
+		Subtract the value n8 but not store it in A register.
+	*/
+	void CP_A_n8();
 
 	/*
 		Increment value in register r8 by 1.
@@ -174,14 +255,9 @@ public:
 	void RET();
 
 	/*
-		Return from subroutine if condition NZ is met.
+		Return from subroutine if condition cc is met.
 	*/
-	void RET_NZ();
-
-	/*
-		Return from subroutine if condition NC is met.
-	*/
-	void RET_NC();
+	void RET_cc(bool cc);
 
 	/*** Load instructions ***/
 
@@ -259,6 +335,16 @@ public:
 	*/
 	void LD_ar8r8_r8(std::uint8_t* areg1, std::uint8_t* areg2, std::uint8_t regValue);
 
+	/*
+		Load value stored in register r16 to memory pointed by a16
+	*/
+	void LD_a16_r16(std::uint16_t reg);
+
+	/*
+		Add the signed value e8 to SP and store the result in HL.
+	*/
+	void LD_HL_SPe8();
+
 	/*** Jump, call instructions ***/
 
 	/*
@@ -268,16 +354,10 @@ public:
 	void JR_e8();
 
 	/*
-		Relative Jump to address e8 if zero flag is set to 1.
+		Relative Jump to address e8 if condition cc is met.
 		The address is encoded as a signed 8-bit offset from the address immediately following the JR instruction, so the target address e8 must be between -128 and 127 bytes away.
 	*/
-	void JR_NZ_e8();
-
-	/*
-		Relative Jump to address e8 if carry flag is set to 1.
-		The address is encoded as a signed 8-bit offset from the address immediately following the JR instruction, so the target address e8 must be between -128 and 127 bytes away.
-	*/
-	void JR_NC_e8();
+	void JR_cc_e8(bool cc_func);
 
 	/*
 		Jump to address a16.
@@ -285,14 +365,9 @@ public:
 	void JP_a16();
 
 	/*
-		Jump to address a16 if condition NZ is met.
+		Jump to address a16 if condition cc is met.
 	*/
-	void JP_NZ_a16();
-
-	/*
-		Jump to address a16 if condition NC is met.
-	*/
-	void JP_NC_a16();
+	void JP_cc_a16(bool cc);
 
 	/*
 		Call address a16. This pushes the address of the instruction after the CALL on the stack, such that RET can pop it later; then, it executes an implicit JP n16.
@@ -300,14 +375,9 @@ public:
 	void CALL();
 
 	/*
-		Call address a16 if condition NZ is met.
+		Call address a16 if condition cc is met.
 	*/
-	void CALL_NZ_a16();
-
-	/*
-		Call address a16 if condition NC is met.
-	*/
-	void CALL_NC_a16();
+	void CALL_cc_a16(bool cc);
 
 	/*
 		Call address vec. This is a shorter and faster equivalent to CALL for suitable values of vec.
