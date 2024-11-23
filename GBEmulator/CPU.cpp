@@ -422,6 +422,319 @@ void CPU::executeOpcode(std::uint8_t opcode)
 	case 0xF8:
 		LD_HL_SPe8();
 		break;
+	case 0x9:
+		ADD_HL_r8r8(&(this->B), &(this->C));
+		break;
+	case 0x19:
+		ADD_HL_r8r8(&(this->D), &(this->E));
+		break;
+	case 0x29:
+		ADD_HL_r8r8(&(this->H), &(this->L));
+		break;
+	case 0x39:
+		ADD_HL_r16(&(this->SP));
+		break;
+	case 0x49:	// LD C, C
+		NOP();
+		break;
+	case 0x59:
+		LD_r8_r8(&(this->E), &(this->C));
+		break;
+	case 0x69:
+		LD_r8_r8(&(this->L), &(this->C));
+		break;
+	case 0x79:
+		LD_r8_r8(&(this->A), &(this->C));
+		break;
+	case 0x89:
+		ADC_A_r8(this->C);
+		break;
+	case 0x99:
+		SBC_A_r8(this->C);
+		break;
+	case 0xA9:
+		XOR_A_r8(this->C);
+		break;
+	case 0xB9:
+		CP_A_r8(this->C);
+		break;
+	case 0xC9:
+		RETi();
+		break;
+	case 0xE9:
+		JP_HL();
+		break;
+	case 0xF9:
+		LD_SP_HL();
+		break;
+	case 0xA:
+		LD_r8_ar8r8(&(this->A), this->B, this->C);
+		break;
+	case 0x1A:
+		LD_r8_ar8r8(&(this->A), this->D, this->E);
+		break;
+	case 0x2A:
+		LD_A_aHLI();
+		break;
+	case 0x3A:
+		LD_A_aHLD();
+		break;
+	case 0x4A:
+		LD_r8_r8(&(this->C), &(this->D));
+		break;
+	case 0x5A:
+		LD_r8_r8(&(this->E), &(this->D));
+		break;
+	case 0x6A:
+		LD_r8_r8(&(this->L), &(this->D));
+		break;
+	case 0x7A:
+		LD_r8_r8(&(this->A), &(this->D));
+		break;
+	case 0x8A:
+		ADC_A_r8(this->D);
+		break;
+	case 0x9A:
+		SBC_A_r8(this->D);
+		break;
+	case 0xAA:
+		XOR_A_r8(this->D);
+		break;
+	case 0xBA:
+		CP_A_r8(this->D);
+		break;
+	case 0xCA:
+		JP_cc_a16(this->Z_flag());
+		break;
+	case 0xDA:
+		JP_cc_a16(this->C_flag());
+		break;
+	case 0xEA:
+		LD_aa16_A();
+		break;
+	case 0xFA:
+		LD_A_aa16();
+		break;
+	case 0xB:
+		DEC_r8r8(&(this->B), &(this->C));
+		break;
+	case 0x1B:
+		DEC_r8r8(&(this->D), &(this->E));
+		break;
+	case 0x2B:
+		DEC_r8r8(&(this->H), &(this->L));
+		break;
+	case 0x3B:
+		DEC_r16(&(this->SP));
+		break;
+	case 0x4B:
+		LD_r8_r8(&(this->C), &(this->E));
+		break;
+	case 0x5B:
+		LD_r8_r8(&(this->E), &(this->E));
+		break;
+	case 0x6B:
+		LD_r8_r8(&(this->L), &(this->E));
+		break;
+	case 0x7B:
+		LD_r8_r8(&(this->A), &(this->E));
+		break;
+	case 0x8B:
+		ADC_A_r8(this->E);
+		break;
+	case 0x9B:
+		SBC_A_r8(this->E);
+		break;
+	case 0xAB:
+		XOR_A_r8(this->E);
+		break;
+	case 0xBB:
+		CP_A_r8(this->E);
+		break;
+	case 0xCB:
+		printf("Prefix!!!!!!!\n");
+		break;
+	case 0xFB:
+		EI();
+		break;
+	case 0xC:
+		INC_r8(&(this->C));
+		break;
+	case 0x1C:
+		INC_r8(&(this->E));
+		break;
+	case 0x2C:
+		INC_r8(&(this->L));
+		break;
+	case 0x3C:
+		INC_r8(&(this->A));
+		break;
+	case 0x4C:
+		LD_r8_r8(&(this->C), &(this->H));
+		break;
+	case 0x5C:
+		LD_r8_r8(&(this->E), &(this->H));
+		break;
+	case 0x6C:
+		LD_r8_r8(&(this->L), &(this->H));
+		break;
+	case 0x7C:
+		LD_r8_r8(&(this->A), &(this->H));
+		break;
+	case 0x8C:
+		ADC_A_r8(this->H);
+		break;
+	case 0x9C:
+		SBC_A_r8(this->H);
+		break;
+	case 0xAC:
+		XOR_A_r8(this->H);
+		break;
+	case 0xBC:
+		CP_A_r8(this->H);
+		break;
+	case 0xCC:
+		CALL_cc_a16(this->Z_flag());
+		break;
+	case 0xDC:
+		CALL_cc_a16(this->C_flag());
+		break;
+	case 0xD:
+		DEC_r8(&(this->C));
+		break;
+	case 0x1D:
+		DEC_r8(&(this->E));
+		break;
+	case 0x2D:
+		DEC_r8(&(this->L));
+		break;
+	case 0x3D:
+		DEC_r8(&(this->A));
+		break;
+	case 0x4D:
+		LD_r8_r8(&(this->C), &(this->L));
+		break;
+	case 0x5D:
+		LD_r8_r8(&(this->E), &(this->L));
+		break;
+	case 0x6D:
+		LD_r8_r8(&(this->L), &(this->L));
+		break;
+	case 0x7D:
+		LD_r8_r8(&(this->A), &(this->L));
+		break;
+	case 0x8D:
+		ADC_A_r8(this->L);
+		break;
+	case 0x9D:
+		SBC_A_r8(this->L);
+		break;
+	case 0xAD:
+		XOR_A_r8(this->L);
+		break;
+	case 0xBD:
+		CP_A_r8(this->L);
+		break;
+	case 0xCD:
+		CALL();
+		break;
+	case 0xE:
+		LD_r8_n8(&(this->C));
+		break;
+	case 0x1E:
+		LD_r8_n8(&(this->E));
+		break;
+	case 0x2E:
+		LD_r8_n8(&(this->L));
+		break;
+	case 0x3E:
+		LD_r8_n8(&(this->A));
+		break;
+	case 0x4E:
+		LD_r8_ar8r8(&(this->C), this->H, this->L);
+		break;
+	case 0x5E:
+		LD_r8_ar8r8(&(this->E), this->H, this->L);
+		break;
+	case 0x6E:
+		LD_r8_ar8r8(&(this->L), this->H, this->L);
+		break;
+	case 0x7E:
+		LD_r8_ar8r8(&(this->A), this->H, this->L);
+		break;
+	case 0x8E:
+		ADC_A_ar8r8(this->H, this->L);
+		break;
+	case 0x9E:
+		SBC_A_ar8r8(this->H, this->L);
+		break;
+	case 0xAE:
+		XOR_A_ar8r8(&(this->H), &(this->L));
+		break;
+	case 0xBE:
+		CP_A_ar8r8(this->H, this->L);
+		break;
+	case 0xCE:
+		ADC_A_n8();
+		break;
+	case 0xDE:
+		SBC_A_n8();
+		break;
+	case 0xEE:
+		XOR_A_n8();
+		break;
+	case 0xFE:
+		CP_A_n8();
+		break;
+	case 0xF:
+		RRCA();
+		break;
+	case 0x1F:
+		RRA();
+		break;
+	case 0x2F:
+		CPL();
+		break;
+	case 0x3F:
+		CCF();
+		break;
+	case 0x4F:
+		LD_r8_r8(&(this->C), &(this->A));
+		break;
+	case 0x5F:
+		LD_r8_r8(&(this->E), &(this->A));
+		break;
+	case 0x6F:
+		LD_r8_r8(&(this->L), &(this->A));
+		break;
+	case 0x7F:
+		LD_r8_r8(&(this->A), &(this->A));
+		break;
+	case 0x8F:
+		ADC_A_r8(this->A);
+		break;
+	case 0x9F:
+		SBC_A_r8(this->A);
+		break;
+	case 0xAF:
+		XOR_A_r8(this->A);
+		break;
+	case 0xBF:
+		CP_A_r8(this->A);
+		break;
+	case 0xCF:
+		RST(0x8);
+		break;
+	case 0xDF:
+		RST(0x18);
+		break;
+	case 0xEF:
+		RST(0x28);
+		break;
+	case 0xFF:
+		RST(0x38);
+		break;
+		
 	default:
 		printf("Not supported opcode.\n");
 		break;
@@ -430,7 +743,28 @@ void CPU::executeOpcode(std::uint8_t opcode)
 
 std::uint8_t CPU::readMemory(std::uint16_t addressToRead)
 {
-	return mmu.read_memory(addressToRead);
+	uint8_t value;
+	switch (addressToRead)
+	{
+	case 0xFF40:
+		value = gpu.lcdc;
+		break;
+	case 0xFF42:
+		value = gpu.scx;
+		break;
+	case 0xFF43:
+		value = gpu.scy;
+		break;
+	case 0xFF44:
+		value = gpu.line;
+		break;
+	default:
+		value = mmu.read_memory(addressToRead);
+		break;
+	}
+
+	printf("Odczytano wartosc: %x z adresu: %x\n", value, addressToRead);
+	return value;
 }
 
 std::uint8_t CPU::readInstruction(std::uint16_t addressToRead)
@@ -440,7 +774,26 @@ std::uint8_t CPU::readInstruction(std::uint16_t addressToRead)
 
 void CPU::writeMemory(std::uint16_t addressToWrite, std::uint8_t value)
 {
-	mmu.write_memory(addressToWrite, value);
+	switch (addressToWrite)
+	{
+	case 0xFF40:
+		this->gpu.lcdc = value;
+		break;
+	case 0xFF42:
+		this->gpu.scx = value;
+		break;
+	case 0xFF43:
+		this->gpu.scx = value;
+		break;
+	case 0xFF47:
+		this->gpu.bgp = value;
+		break;
+	default:
+		mmu.write_memory(addressToWrite, value);
+		break;
+	}
+
+	printf("Zapisano wartosc: %x pod adresem %x\n", value, addressToWrite);
 }
 
 void CPU::setFlag(char flag, bool value)
@@ -493,27 +846,32 @@ void CPU::step()
 	this->PC++;
 	printf("Executing opcode %x...\n", opcode);
 	executeOpcode(opcode);
-	printf("Executed.\n");
+	gpu.step(this->cycles / 4);
+	renderer.render(gpu.framebuffer);
+
+	this->cycles = 0;
+	// using namespace std::chrono_literals;
+	// std::this_thread::sleep_for(10ms);
 }
 
 bool CPU::Z_flag()
 {
-	return this->F < 0b10000000;
+	return this->F >= 0b10000000;
 }
 
 bool CPU::N_flag()
 {
-	return (this->F << 1) < 0b10000000;
+	return (this->F << 1) >= 0b10000000;
 }
 
 bool CPU::H_flag()
 {
-	return (this->F << 2) < 0b10000000;
+	return (this->F << 2) >= 0b10000000;
 }
 
 bool CPU::C_flag()
 {
-	return (this->F << 3) < 0b10000000;
+	return (this->F << 3) >= 0b10000000;
 }
 
 bool CPU::NZ_flag()
@@ -549,6 +907,40 @@ void CPU::SCF()
 void CPU::STOP()
 {
 	this->cycles += 0; // idk
+	this->PC++;
+}
+
+void CPU::RRCA()
+{
+	uint8_t lsb = this->A & 1;
+
+	// set flags
+	setFlag('Z', false);
+	setFlag('N', false);
+	setFlag('H', false);
+	setFlag('C', lsb);
+
+	this->A >>= 1;
+	this->A += lsb << 7;
+
+	this->cycles += 4;
+}
+
+void CPU::RRA()
+{
+	uint8_t lsb = this->A & 1;
+	uint8_t c = C_flag();
+
+	// set flags
+	setFlag('Z', false);
+	setFlag('N', false);
+	setFlag('H', false);
+	setFlag('C', lsb);
+
+	this->A >>= 1;
+	this->A += c << 7;
+
+	this->cycles += 4;
 }
 
 void CPU::JR_cc_e8(bool cc)
@@ -559,6 +951,7 @@ void CPU::JR_cc_e8(bool cc)
 	}
 	else
 	{
+		this->PC++;
 		this->cycles += 8;
 	}
 }
@@ -582,13 +975,21 @@ void CPU::JP_cc_a16(bool cc)
 	}
 	else
 	{
+		this->PC += 2;
 		this->cycles += 12;
 	}
 }
 
+void CPU::JP_HL()
+{
+	uint16_t address = (this->H << 8) + this->L;
+	this->PC = address;
+	this->cycles += 4;
+}
+
 void CPU::CALL()
 {
-	PUSH_r16(&(this->PC) + 3);	// push address of next instruction
+	PUSH_r16(this->PC + 3);	// push address of next instruction
 
 	// read address from instruction set
 	uint16_t address = readInstruction(this->PC);
@@ -610,13 +1011,16 @@ void CPU::CALL_cc_a16(bool cc)
 	}
 	else
 	{
+		this->PC += 2;
 		this->cycles += 12;
 	}
 }
 
 void CPU::RST(std::uint16_t vectorAddress)
 {
-	// TODO
+	PUSH_r16(this->PC + 1);
+	this->PC = vectorAddress;
+	this->cycles += 16;
 }
 
 void CPU::RLC_r8(std::uint8_t* reg)
@@ -649,12 +1053,17 @@ void CPU::RL_r8(std::uint8_t* reg)
 
 void CPU::CCF()
 {
-	// TODO
+	setFlag('N', false);
+	setFlag('H', false);
+	setFlag('C', C_flag() ? 0 : 1);
+	this->cycles += 4;
 }
 
 void CPU::CPL()
 {
-	// TODO
+	this->A = ~(this->A);
+	setFlag('N', true);
+	setFlag('H', true);
 }
 
 void CPU::DAA()
@@ -669,7 +1078,7 @@ void CPU::DI()
 
 void CPU::EI()
 {
-	// TODO
+	this->cycles += 4;
 }
 
 void CPU::HALT()
@@ -752,6 +1161,19 @@ void CPU::ADD_SP_e8()
 void CPU::ADD_HL_r8r8(std::uint8_t* reg1, std::uint8_t* reg2)
 {
 
+}
+
+void CPU::ADD_HL_r16(std::uint16_t* reg)
+{
+	uint16_t HL_value = (this->H << 8) + this->L;
+
+	setFlag('N', false);
+	setFlag('H', ((HL_value & 0x0FFF) + (HL_value & 0x0FFF)) > 0x0FFF);
+	setFlag('C', uint16_t(this->SP + HL_value) > 0xFFFF);
+
+	HL_value += *(reg);
+	this->H = (HL_value >> 8);
+	this->L = HL_value & 0xFF;
 }
 
 void CPU::SUB_A_r8(std::uint8_t reg)
@@ -1096,7 +1518,7 @@ void CPU::INC_r8r8(std::uint8_t* reg1, std::uint8_t* reg2)
 void CPU::DEC_r8(std::uint8_t* reg)
 {
 	// set flags
-	setFlag('Z', (*reg) == 1);
+	setFlag('Z', (*reg) - 1 == 0);
 	setFlag('N', true);
 	setFlag('H', ((*reg) & 0x0F) == 0);
 
@@ -1145,10 +1567,10 @@ void CPU::PUSH_r8r8(std::uint8_t* reg1, std::uint8_t* reg2)
 	this->cycles += 16;
 }
 
-void CPU::PUSH_r16(std::uint16_t* reg)
+void CPU::PUSH_r16(std::uint16_t reg)
 {
-	uint8_t high = uint8_t((*reg) >> 8);
-	uint8_t low = uint8_t((*reg) & 0xFF);
+	uint8_t high = uint8_t(reg >> 8);
+	uint8_t low = uint8_t(reg & 0xFF);
 
 	this->SP -= 1;
 	writeMemory(this->SP, high);
@@ -1174,7 +1596,8 @@ void CPU::RET()
 	this->SP += 1;
 	popedValue += uint16_t(readMemory(this->SP)) << 8;	// high
 	this->SP += 1;
-
+	
+	this->PC = popedValue - 1;
 	this->cycles += 16;
 }
 
@@ -1185,6 +1608,18 @@ void CPU::RET_cc(bool cc)
 		RET();
 		this->cycles += 4;
 	}
+	else
+	{
+		this->cycles += 8;
+	}
+}
+
+void CPU::RETi()
+{
+	EI();
+	RET();
+	// EI() + RET() = 20, RETi takes 16
+	this->cycles -= 4;
 }
 
 void CPU::LDH_a8_A()
@@ -1250,7 +1685,7 @@ void CPU::LD_r16_n16(std::uint16_t* reg)
 {
 	*reg = uint16_t(readInstruction(this->PC));	// low
 	this->PC += 1;
-	*reg = uint16_t(readInstruction(this->PC)) << 8;	// high
+	*reg += uint16_t(readInstruction(this->PC)) << 8;	// high
 	this->PC += 1;
 
 	this->cycles += 12;
@@ -1292,6 +1727,30 @@ void CPU::LD_ar8r8_r8(std::uint8_t* areg1, std::uint8_t* areg2, std::uint8_t reg
 	this->cycles += 8;
 }
 
+void CPU::LD_aa16_A()
+{
+	// read address from instruction set
+	uint16_t address = readInstruction(this->PC);
+	this->PC++;
+	address += uint16_t(readInstruction(this->PC)) << 8;
+	this->PC++;
+
+	writeMemory(address, this->A);
+	this->cycles += 16;
+}
+
+void CPU::LD_A_aa16()
+{
+	// read address from instruction set
+	uint16_t address = readInstruction(this->PC);
+	this->PC++;
+	address += uint16_t(readInstruction(this->PC)) << 8;
+	this->PC++;
+
+	this->A = readMemory(address);
+	this->cycles += 16;
+}
+
 void CPU::LD_a16_r16(uint16_t reg)
 {
 	// read address from instruction set
@@ -1329,12 +1788,19 @@ void CPU::LD_HL_SPe8()
 	this->cycles += 12;
 }
 
+void CPU::LD_SP_HL()
+{
+	this->SP = (this->H << 8) + this->L;
+	this->cycles += 8;
+}
+
 void CPU::JR_e8()
 {
 	int8_t offset = readInstruction(this->PC); // read signed offset
 	this->PC++;
 	
 	this->PC += offset;
+	printf("Jump at address %x to address: %x\n", this->PC - offset - 1, this->PC);
 
 	this->cycles += 12;
 }

@@ -1,14 +1,18 @@
-﻿#include <iostream>
+﻿#define SDL_MAIN_HANDLED
+
+#include "CPU.h"
 #include <cstddef>
 #include <cstdint>
-#include "CPU.h"
+#include <iostream>
+#include <SDL.h>
 
 using namespace std;
 
 void load_ROM_procedure()
 {
 	FILE* file;
-	fopen_s(&file, "ROMs/cpu_instrs.gb", "rb");
+	fopen_s(&file, "ROMs/opus_tests/opus1.gb", "rb");
+	// fopen_s(&file, "ROMs/instruction_tests/05-op rp.gb", "rb");
 
 	if (!file)
 	{
@@ -22,16 +26,6 @@ void load_ROM_procedure()
 	fseek(file, 0L, SEEK_END);
 	int file_size = ftell(file);
 
-	for (uint16_t i = 0; i < 100; i++)
-	{
-		for (uint16_t j = 0; j < 15; j++)
-		{
-			printf("%02x ", buffer[i * 16 + j]);
-		}
-
-		printf("\n");
-	}
-
 	printf("Loading ROM to GB memory...\n");
 	for (int i = 0; i < file_size; i++)
 	{
@@ -39,16 +33,26 @@ void load_ROM_procedure()
 		printf("\rLoaded %d from %d elements.", i, file_size);
 	}
 
+	fclose(file);
 	printf("\nROM loaded.\nROM size: %d\n", file_size);
 
 	cpu.PC = 0x100;
 	while (true)
 	{
 		cpu.step();
+		// getchar();
 	}
 }
 
 int main()
 {
+	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+		std::cerr << "Nie udało się zainicjować SDL: " << SDL_GetError() << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
 	load_ROM_procedure();
+
+	SDL_Quit();
+	return 0;
 }

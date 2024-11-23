@@ -5,6 +5,7 @@
 
 class MMU
 {
+public:
     uint8_t ROM_bank_0[0x4000];
     uint8_t ROM_bank_1[0x4000];
     uint8_t Graphic_RAM[0x2000];
@@ -15,7 +16,6 @@ class MMU
     uint8_t Memory_mapped_IO[0x80];
     uint8_t Zero_page_RAM[0x80];
 
-public:
     uint8_t read_memory(uint16_t address) {
         if (address <= 0x3FFF) {  // [0000-3FFF] Cartridge ROM, bank 0
             return ROM_bank_0[address];

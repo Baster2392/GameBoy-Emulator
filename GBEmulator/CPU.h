@@ -2,7 +2,11 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <chrono>
+#include <thread>
 #include "MMU.h"
+#include "GPU.h"
+#include "Renderer.h"
 
 class CPU
 {
@@ -26,6 +30,11 @@ public:
 
 	// Memory Management Unit
 	MMU mmu;
+	// Graphic Processing Unit
+	GPU gpu = GPU(mmu.Graphic_RAM, mmu.Graphics_sprite_information);
+	// Renderer
+	Renderer renderer;
+
 
 	void executeOpcode(std::uint8_t opcode);
 	std::uint8_t readMemory(std::uint16_t addressToRead);
@@ -239,7 +248,7 @@ public:
 		reg1 - higher bits
 		reg2 - lower bits
 	*/
-	void PUSH_r16(std::uint16_t* reg);
+	void PUSH_r16(std::uint16_t reg);
 
 	/*
 		Pop register r16 from the stack.
@@ -258,6 +267,11 @@ public:
 		Return from subroutine if condition cc is met.
 	*/
 	void RET_cc(bool cc);
+
+	/*
+		Return from subroutine and enable interrupts. This is basically equivalent to executing EI then RET, meaning that IME is set right after this instruction.
+	*/
+	void RETi();
 
 	/*** Load instructions ***/
 
@@ -336,6 +350,16 @@ public:
 	void LD_ar8r8_r8(std::uint8_t* areg1, std::uint8_t* areg2, std::uint8_t regValue);
 
 	/*
+		Store value in register A into the byte at address n16.
+	*/
+	void LD_aa16_A();
+
+	/*
+		Store value in the byte at address n16 register A into register A.
+	*/
+	void LD_A_aa16();
+
+	/*
 		Load value stored in register r16 to memory pointed by a16
 	*/
 	void LD_a16_r16(std::uint16_t reg);
@@ -344,6 +368,11 @@ public:
 		Add the signed value e8 to SP and store the result in HL.
 	*/
 	void LD_HL_SPe8();
+
+	/*
+		Load register HL into register SP.
+	*/
+	void LD_SP_HL();
 
 	/*** Jump, call instructions ***/
 
@@ -368,6 +397,11 @@ public:
 		Jump to address a16 if condition cc is met.
 	*/
 	void JP_cc_a16(bool cc);
+
+	/*
+		Jump to address in HL; effectively, load PC with value in register HL.
+	*/
+	void JP_HL();
 
 	/*
 		Call address a16. This pushes the address of the instruction after the CALL on the stack, such that RET can pop it later; then, it executes an implicit JP n16.
@@ -443,5 +477,17 @@ public:
 		Also used to switch between double and normal speed CPU modes in GBC.
 	*/
 	void STOP();
+
+	/***** Bit Shift Instructions *****/
+
+	/*
+		Rotate register A right and set carry flag.
+	*/
+	void RRCA();
+
+	/*
+		Rotate register A right with carry flag.
+	*/
+	void RRA();
 };
 
