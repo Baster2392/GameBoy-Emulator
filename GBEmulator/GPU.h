@@ -18,7 +18,9 @@ public:
 	uint8_t obp0, obp1;      // Palety sprite'ów
 	uint8_t wy, wx;          // Pozycja okna
 
-	uint8_t color_palette[4] = {0, 63, 127, 255};
+	uint8_t color_palette[4] = {255, 127, 63, 0};
+
+	bool ready_to_render = false;
 
 	/*
 		GPU mode number:
@@ -61,7 +63,7 @@ public:
 				// Enter scanline mode 3
 				this->mode_clock = 0;
 				this->mode = 3;
-				this->stat = (this->stat & 0xFC) | this->mode;
+				// this->stat = (this->stat & 0xFC) | this->mode;
 			}
 			break;
 		case 3:	// VRAM read mode, scanline active
@@ -69,7 +71,7 @@ public:
 			{
 				this->mode_clock = 0;
 				this->mode = 0;
-				this->stat = (this->stat & 0xFC) | this->mode;
+				// this->stat = (this->stat & 0xFC) | this->mode;
 				render_scanline();
 			}
 			break;
@@ -79,15 +81,15 @@ public:
 				this->mode_clock = 0;
 				this->line++;
 
-				if (line == 143)
+				if (this->line == 143)
 				{
 					this->mode = 1;
-					this->stat = (this->stat & 0xFC) | this->mode;
+					// this->stat = (this->stat & 0xFC) | this->mode;
 				}
 				else
 				{
 					this->mode = 2;
-					this->stat = (this->stat & 0xFC) | this->mode;
+					// this->stat = (this->stat & 0xFC) | this->mode;
 				}
 			}
 			break;
@@ -102,7 +104,7 @@ public:
 					// Restart scanning modes
 					this->mode = 2;
 					this->line = 0;
-					this->stat = (this->stat & 0xFC) | this->mode;
+					// this->stat = (this->stat & 0xFC) | this->mode;
 
 				}
 			}
@@ -139,6 +141,7 @@ public:
 			this->framebuffer[this->line * 160 + x] = color_palette[pixelColor];
 		}
 
+		ready_to_render = true;
 		printf("Rendered\n");
 		// getchar(); getchar();
 	}

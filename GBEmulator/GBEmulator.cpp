@@ -3,7 +3,6 @@
 #include "CPU.h"
 #include <cstddef>
 #include <cstdint>
-#include <iostream>
 #include <SDL.h>
 
 using namespace std;
@@ -11,7 +10,7 @@ using namespace std;
 void load_ROM_procedure()
 {
 	FILE* file;
-	fopen_s(&file, "ROMs/opus_tests/opus1.gb", "rb");
+	fopen_s(&file, "ROMs/opus_tests/opus5.gb", "rb");
 	// fopen_s(&file, "ROMs/instruction_tests/05-op rp.gb", "rb");
 
 	if (!file)

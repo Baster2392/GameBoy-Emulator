@@ -459,6 +459,9 @@ void CPU::executeOpcode(std::uint8_t opcode)
 		CP_A_r8(this->C);
 		break;
 	case 0xC9:
+		RET();
+		break;
+	case 0xD9:
 		RETi();
 		break;
 	case 0xE9:
@@ -553,6 +556,7 @@ void CPU::executeOpcode(std::uint8_t opcode)
 		break;
 	case 0xCB:
 		printf("Prefix!!!!!!!\n");
+		exit(0);
 		break;
 	case 0xFB:
 		EI();
@@ -846,8 +850,13 @@ void CPU::step()
 	this->PC++;
 	printf("Executing opcode %x...\n", opcode);
 	executeOpcode(opcode);
-	gpu.step(this->cycles / 4);
-	renderer.render(gpu.framebuffer);
+	gpu.step(this->cycles);
+
+	if (gpu.ready_to_render)
+	{
+		renderer.render(gpu.framebuffer);
+		gpu.ready_to_render = false;
+	}
 
 	this->cycles = 0;
 	// using namespace std::chrono_literals;
@@ -901,7 +910,11 @@ void CPU::NOP()
 
 void CPU::SCF()
 {
-	// TODO
+	setFlag('N', false);
+	setFlag('H', false);
+	setFlag('C', true);
+
+	this->cycles += 4;
 }
 
 void CPU::STOP()
@@ -1068,12 +1081,13 @@ void CPU::CPL()
 
 void CPU::DAA()
 {
-	// TODO
+	this->cycles += 4;
+	exit(0);
 }
 
 void CPU::DI()
 {
-	// TODO
+	this->cycles += 4;
 }
 
 void CPU::EI()
@@ -1083,7 +1097,7 @@ void CPU::EI()
 
 void CPU::HALT()
 {
-	// TODO
+	this->cycles += 4;
 }
 
 void CPU::LD_r8_r8(std::uint8_t* reg1, std::uint8_t* reg2)
@@ -1160,7 +1174,19 @@ void CPU::ADD_SP_e8()
 
 void CPU::ADD_HL_r8r8(std::uint8_t* reg1, std::uint8_t* reg2)
 {
+	uint16_t hlValue = uint16_t(this->H << 8) + uint16_t(this->L);
+	uint16_t r1r2Value = uint16_t((*reg1) << 8) + uint16_t(*reg2);
+	uint16_t result = hlValue + r1r2Value;
 
+	hlValue += r1r2Value;
+	this->H = uint8_t(hlValue >> 8);
+	this->L = uint8_t(hlValue & 0xFF);
+
+	setFlag('N', false);
+	setFlag('H', ((hlValue & 0x0FFF) + (r1r2Value & 0x0FFF)) > 0x0FFF);
+	setFlag('C', result > 0xFFFF);
+
+	this->cycles += 8;
 }
 
 void CPU::ADD_HL_r16(std::uint16_t* reg)
