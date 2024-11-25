@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <chrono>
 #include <thread>
+#include <functional>
+#include <array>
 #include "MMU.h"
 #include "GPU.h"
 #include "Renderer.h"
@@ -35,7 +37,14 @@ public:
 	// Renderer
 	Renderer renderer;
 
+	CPU();
 
+	// Opcode table
+	static constexpr size_t OPCODE_COUNT = 256;
+	std::array<std::function<void()>, OPCODE_COUNT> opcodeTable;
+	void initializeOpcodeTable();
+
+	// CPU actions
 	void executeOpcode(std::uint8_t opcode);
 	std::uint8_t readMemory(std::uint16_t addressToRead);
 	std::uint8_t readInstruction(std::uint16_t addressToRead);

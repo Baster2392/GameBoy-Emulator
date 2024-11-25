@@ -120,6 +120,9 @@ public:
 		uint8_t* tileMap = (this->lcdc & 0x08) ? &vram[0x1C00] : &vram[0x1800];
 		uint8_t* tileData = (this->lcdc & 0x10) ? &vram[0x0000] : &vram[0x0800];
 
+		// get scx and scy from mmu
+
+
 		// calculate tile row
 		int y = (this->line + this->scy) & 0xFF;
 		int tileRow = (y / 8) * 32;

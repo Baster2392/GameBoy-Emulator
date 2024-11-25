@@ -7,7 +7,7 @@
 
 using namespace std;
 
-void load_ROM_procedure()
+void load_ROM_procedure(CPU& cpu)
 {
 	FILE* file;
 	fopen_s(&file, "ROMs/opus_tests/opus5.gb", "rb");
@@ -19,7 +19,6 @@ void load_ROM_procedure()
 		return;
 	}
 
-	CPU cpu = CPU();
 	uint8_t buffer[0xFFFF];
 	fread(&buffer, sizeof(uint8_t), 0xFFFF, file);
 	fseek(file, 0L, SEEK_END);
@@ -34,13 +33,6 @@ void load_ROM_procedure()
 
 	fclose(file);
 	printf("\nROM loaded.\nROM size: %d\n", file_size);
-
-	cpu.PC = 0x100;
-	while (true)
-	{
-		cpu.step();
-		// getchar();
-	}
 }
 
 int main()
@@ -50,7 +42,15 @@ int main()
 		exit(EXIT_FAILURE);
 	}
 
-	load_ROM_procedure();
+	CPU cpu = CPU();
+	load_ROM_procedure(cpu);
+	cpu.PC = 0x100;
+
+	while (true)
+	{
+		cpu.step();
+		// getchar();
+	}
 
 	SDL_Quit();
 	return 0;
