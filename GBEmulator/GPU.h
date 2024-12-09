@@ -145,7 +145,7 @@ public:
 		}
 
 		ready_to_render = true;
-		printf("Rendered\n");
+		// printf("Rendered\n");
 		// getchar(); getchar();
 	}
 };

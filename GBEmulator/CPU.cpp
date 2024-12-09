@@ -283,7 +283,7 @@ std::uint8_t CPU::readMemory(std::uint16_t addressToRead)
 		break;
 	}
 
-	printf("Odczytano wartosc: %x z adresu: %x\n", value, addressToRead);
+	// printf("Odczytano wartosc: %x z adresu: %x\n", value, addressToRead);
 	return value;
 }
 
@@ -313,7 +313,7 @@ void CPU::writeMemory(std::uint16_t addressToWrite, std::uint8_t value)
 		break;
 	}
 
-	printf("Zapisano wartosc: %x pod adresem %x\n", value, addressToWrite);
+	// printf("Zapisano wartosc: %x pod adresem %x\n", value, addressToWrite);
 }
 
 void CPU::setFlag(char flag, bool value)
@@ -364,7 +364,7 @@ void CPU::step()
 {
 	uint8_t opcode = readInstruction(this->PC);
 	this->PC++;
-	printf("Executing opcode %x...\n", opcode);
+	// printf("Executing opcode %x...\n", opcode);
 	executeOpcode(opcode);
 	gpu.step(this->cycles);
 
@@ -1342,7 +1342,7 @@ void CPU::JR_e8()
 	this->PC++;
 	
 	this->PC += offset;
-	printf("Jump at address %x to address: %x\n", this->PC - offset - 1, this->PC);
+	// printf("Jump at address %x to address: %x\n", this->PC - offset - 1, this->PC);
 
 	this->cycles += 12;
 }

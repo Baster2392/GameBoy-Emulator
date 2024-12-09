@@ -59,8 +59,23 @@ void Renderer::render(const uint8_t* framebuffer)
 bool Renderer::handleEvents() {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
-        if (event.type == SDL_QUIT) {
-            return false;
+        switch (event.type) {
+        case SDL_QUIT:
+            break;
+
+        case SDL_KEYDOWN: // Naciœniêcie klawisza
+            std::cout << "Naciœniêto klawisz: "
+                << SDL_GetKeyName(event.key.keysym.sym) << std::endl;
+            exit(0);
+            break;
+
+        case SDL_KEYUP: // Zwolnienie klawisza
+            std::cout << "Zwolniono klawisz: "
+                << SDL_GetKeyName(event.key.keysym.sym) << std::endl;
+            break;
+
+        default:
+            break;
         }
     }
     return true;

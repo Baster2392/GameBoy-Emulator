@@ -9,6 +9,7 @@
 #include "MMU.h"
 #include "GPU.h"
 #include "Renderer.h"
+#include "KeyboardHandler.h"
 
 class CPU
 {
@@ -30,8 +31,10 @@ public:
 	// cycles counter
 	int cycles;
 
+	// Keyboard handler
+	KeyboardHandler keyboardHandler;
 	// Memory Management Unit
-	MMU mmu;
+	MMU mmu = MMU(&keyboardHandler);
 	// Graphic Processing Unit
 	GPU gpu = GPU(mmu.Graphic_RAM, mmu.Graphics_sprite_information);
 	// Renderer

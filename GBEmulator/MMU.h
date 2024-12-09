@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <stdio.h>
+#include "KeyboardHandler.h"
 
 class MMU
 {
@@ -15,6 +16,12 @@ public:
     uint8_t Graphics_sprite_information[0xA0];
     uint8_t Memory_mapped_IO[0x80];
     uint8_t Zero_page_RAM[0x80];
+    KeyboardHandler* keyboardHandler;
+
+    MMU(KeyboardHandler* keyboardHandler)
+    {
+        this->keyboardHandler = keyboardHandler;
+    }
 
     uint8_t read_memory(uint16_t address) {
         if (address <= 0x3FFF) {  // [0000-3FFF] Cartridge ROM, bank 0
@@ -39,6 +46,11 @@ public:
             return Graphics_sprite_information[address - 0xFE00];
         }
         else if (address >= 0xFF00 && address <= 0xFF7F) {  // [FF00-FF7F] Memory-mapped I/O
+            if (address == 0xFF00)
+            {
+                return keyboardHandler->read_value();
+            }
+
             return Memory_mapped_IO[address - 0xFF00];
         }
         else if (address >= 0xFF80 && address <= 0xFFFF) {  // [FF80-FFFF] Zero-page RAM
@@ -74,6 +86,10 @@ public:
             Graphics_sprite_information[address - 0xFE00] = value;
         }
         else if (address >= 0xFF00 && address <= 0xFF7F) {  // [FF00-FF7F] Memory-mapped I/O
+            if (address == 0xFF00)
+            {
+                keyboardHandler->write_value(value);
+            }
             Memory_mapped_IO[address - 0xFF00] = value;
         }
         else if (address >= 0xFF80 && address <= 0xFFFF) {  // [FF80-FFFF] Zero-page RAM

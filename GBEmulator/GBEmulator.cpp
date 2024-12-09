@@ -1,17 +1,23 @@
 ﻿#define SDL_MAIN_HANDLED
 
 #include "CPU.h"
+#include "KeyboardHandler.h"
 #include <cstddef>
 #include <cstdint>
 #include <SDL.h>
+#include <thread>
+#include <functional>
+#include <atomic>
 
 using namespace std;
+
+atomic <bool> running(true);
 
 void load_ROM_procedure(CPU& cpu)
 {
 	FILE* file;
-	fopen_s(&file, "ROMs/opus_tests/opus5.gb", "rb");
-	// fopen_s(&file, "ROMs/instruction_tests/05-op rp.gb", "rb");
+	fopen_s(&file, "ROMs/opus_tests/ttt.gb", "rb");
+	// fopen_s(&file, "ROMs/instruction_tests/09-op r,r.gb", "rb");
 
 	if (!file)
 	{
@@ -35,6 +41,14 @@ void load_ROM_procedure(CPU& cpu)
 	printf("\nROM loaded.\nROM size: %d\n", file_size);
 }
 
+void cpu_loop(CPU& cpu)
+{
+	while (running)
+	{
+		cpu.step();
+	}
+}
+
 int main()
 {
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -46,12 +60,10 @@ int main()
 	load_ROM_procedure(cpu);
 	cpu.PC = 0x100;
 
-	while (true)
-	{
-		cpu.step();
-		// getchar();
-	}
-
+	std::thread cpuThread(cpu_loop, std::ref(cpu));	// cpu thread
+	cpu.keyboardHandler.handleInput(&running);	// input thread
+	
+	cpuThread.join();
 	SDL_Quit();
 	return 0;
 }
