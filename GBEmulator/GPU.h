@@ -83,16 +83,14 @@ public:
 				// Enter scanline mode 3
 				this->mode_clock = 0;
 				this->mode = 3;
-				// this->stat = (this->stat & 0xFC) | this->mode;
 			}
 			break;
 		case 3:	// VRAM read mode, scanline active
 			if (this->mode_clock >= 172)
 			{
+				render_scanline();
 				this->mode_clock = 0;
 				this->mode = 0;
-				// this->stat = (this->stat & 0xFC) | this->mode;
-				render_scanline();
 			}
 			break;
 		case 0:	// horizontal blank
@@ -104,12 +102,11 @@ public:
 				if (this->line == 143)
 				{
 					this->mode = 1;
-					// this->stat = (this->stat & 0xFC) | this->mode;
+					this->ready_to_render = true;
 				}
 				else
 				{
 					this->mode = 2;
-					// this->stat = (this->stat & 0xFC) | this->mode;
 				}
 			}
 			break;
@@ -124,8 +121,6 @@ public:
 					// Restart scanning modes
 					this->mode = 2;
 					this->line = 0;
-					// this->stat = (this->stat & 0xFC) | this->mode;
-					// 
 					// set v-blank happened flag
 					this->mmu->Memory_mapped_IO[0xF] |= 0x1;
 				}
@@ -147,8 +142,6 @@ public:
 		{
 			renderscan_sprites();
 		}
-
-		this->ready_to_render = true;
 	}
 
 	void renderscan_sprites()
@@ -173,17 +166,34 @@ public:
 					if (x + pix >= 0 && x + pix < 160) // TODO: to extend
 					{
 						// select pixel
-						int pixelX = x + pix;
-						uint8_t low = this->mmu->Graphic_RAM[(tileIndex * 16) + (this->line - y) * 2];
-						uint8_t high = this->mmu->Graphic_RAM[(tileIndex * 16) + (this->line - y) * 2 + 1];
+						int pixelX = (options & 0x20) ? 7 - pix : pix;
+						// select line
+						int tileLine = (options & 0x40) ? 7 - (this->line - y) : this->line - y;
+
+						uint8_t low = this->mmu->Graphic_RAM[(tileIndex * 16) + tileLine * 2];
+						uint8_t high = this->mmu->Graphic_RAM[(tileIndex * 16) + tileLine * 2 + 1];
 
 						// decode color value
 						int colorBit = 7 - (pixelX % 8);
 						int color = ((high >> colorBit) & 1) << 1 | ((low >> colorBit) & 1);
 
 						// write to buffer
-						uint8_t pixelColor = (palette >> (color * 2)) & 0x03;
-						this->framebuffer[this->line * 160 + x + pix] = this->color_palette[pixelColor];
+						int buffer_index = this->line * 160 + x + pix;
+						if (options & 0x80)
+						{
+							// write to buffer only, when background pixel is 0
+							if (this->framebuffer[buffer_index] == 0)
+							{
+								uint8_t pixelColor = (palette >> (color * 2)) & 0x03;
+								this->framebuffer[buffer_index] = this->color_palette[pixelColor];
+							}
+						}
+						else
+						{
+							uint8_t pixelColor = (palette >> (color * 2)) & 0x03;
+							if (pixelColor == 3) continue;
+							this->framebuffer[buffer_index] = this->color_palette[pixelColor];
+						}
 					}
 				}
 			}

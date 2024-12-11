@@ -261,6 +261,8 @@ void CPU::initializeOpcodeTable() {
 	opcodeTableBitOperations[0x2] = [this]() { RCL_r8(&(this->D)); };
 	opcodeTableBitOperations[0x7] = [this]() { RCL_r8(&(this->A)); };
 	opcodeTableBitOperations[0x19] = [this]() { RR_r8(&(this->C)); };
+	opcodeTableBitOperations[0x23] = [this]() { SLA_r8(&(this->E)); };
+	opcodeTableBitOperations[0x27] = [this]() { SLA_r8(&(this->A)); };
 	opcodeTableBitOperations[0x1A] = [this]() { RR_r8(&(this->D)); };
 	opcodeTableBitOperations[0x1B] = [this]() { RR_r8(&(this->E)); };
 	opcodeTableBitOperations[0x37] = [this]() { SWAP_r8(&(this->A)); };
@@ -424,7 +426,7 @@ void CPU::step()
 
 	this->cycles = 0;
 	// using namespace std::chrono_literals;
-	// std::this_thread::sleep_for(10ms);
+	std::this_thread::sleep_for(3ns);
 }
 
 bool CPU::Z_flag()
@@ -558,6 +560,20 @@ void CPU::SRL_r8(uint8_t* reg)
 	bool cf = *reg & 0x1;
 	*reg >>= 1;
 
+	// set flags
+	setFlag('Z', *reg == 0);
+	setFlag('N', false);
+	setFlag('H', false);
+	setFlag('C', cf);
+
+	this->cycles += 8;
+}
+
+void CPU::SLA_r8(uint8_t* reg)
+{
+	bool cf = *reg & 0x80;
+	*reg <<= 1;
+	
 	// set flags
 	setFlag('Z', *reg == 0);
 	setFlag('N', false);

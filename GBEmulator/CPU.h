@@ -532,6 +532,11 @@ public:
 	void SRL_r8(uint8_t* reg);
 
 	/*
+		Shift Left Arithmetically register r8.
+	*/
+	void SLA_r8(uint8_t* reg);
+
+	/*
 		Check bit n in reg register
 	*/
 	void BIT_n_r8(uint8_t n, uint8_t* reg);
