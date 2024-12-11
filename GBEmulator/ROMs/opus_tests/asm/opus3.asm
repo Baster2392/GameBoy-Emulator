@@ -906,14 +906,6 @@ update_bullets_loop_end
 ;------------------------------------------------------
 UpdateBulletPositions
 	push	af
-;	ld		a, (ScrollTimer)	; only move bullets every 2nd vblank
-;	and		%00000001
-;	jr		z, update_bullets_pos
-;
-;	pop		af
-;	ret
-;
-;update_bullets_pos
 	push	bc
 
 	ld		hl, bullet_data

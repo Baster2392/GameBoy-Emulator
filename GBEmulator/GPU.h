@@ -2,15 +2,27 @@
 #include <cstdint>
 #include <stdio.h>
 #include <stdlib.h>
+#include "MMU.h"
 
 class GPU
 {
 public:
-	uint8_t* vram;		// VRAM: 8 KB
-	uint8_t* oam;       // OAM: Sprite attribute table
+	MMU* mmu;
 	uint8_t framebuffer[160 * 144]; // Ekran: 160x144 pikseli
 
-	uint8_t lcdc;            // Rejestr sterowania LCD
+	/*
+		Lcd control register:
+		bit
+		0 - Background: on/off
+		1 - Sprites: on/off
+		2 - Sprites: size (pixels)
+		3 - Background: tile map
+		4 - Background: tile set
+		5 - Window: on/off
+		6 - Window: tile map
+		7 - Display: on/off	
+	*/
+	uint8_t lcdc;
 	uint8_t stat;            // Rejestr statusu GPU
 	uint8_t scy, scx;        // Scroll Y, Scroll X
 	uint8_t lyc;             // Porównanie z LY
@@ -43,10 +55,9 @@ public:
 	*/
 	int cpu_cycles;
 
-	GPU(uint8_t* vram, uint8_t* oam)
+	GPU(MMU* mmu)
 	{
-		this->vram = vram;
-		this->oam = oam;
+		this->mmu = mmu;
 	}
 
 	// Execute single GPU step.
@@ -60,6 +71,15 @@ public:
 		case 2:	// OAM read mode, scalnine active
 			if (this->mode_clock >= 80)
 			{
+				uint16_t sprite_info_address = this->mmu->read_memory(0xFF46) << 8;	// read location of sprite attributes in working memory
+
+				// transfer sprite attributes to OAM
+				for (int i = 0; i < 0xA0; i++)
+				{
+					this->mmu->Graphics_sprite_information[i] = this->mmu->read_memory(sprite_info_address);
+					sprite_info_address++;
+				}
+
 				// Enter scanline mode 3
 				this->mode_clock = 0;
 				this->mode = 3;
@@ -105,7 +125,9 @@ public:
 					this->mode = 2;
 					this->line = 0;
 					// this->stat = (this->stat & 0xFC) | this->mode;
-
+					// 
+					// set v-blank happened flag
+					this->mmu->Memory_mapped_IO[0xF] |= 0x1;
 				}
 			}
 		break;
@@ -116,12 +138,63 @@ public:
 
 	void render_scanline()
 	{
+		if (this->lcdc & 0x1)
+		{
+			renderscan_background();
+		}
+
+		if (this->lcdc & 0x2)
+		{
+			renderscan_sprites();
+		}
+
+		this->ready_to_render = true;
+	}
+
+	void renderscan_sprites()
+	{
+		uint16_t oamIterator = 0;
+		// for each sprite
+		for (int i = 0; i < 40; i++)
+		{
+			// read sprite from memory
+			uint8_t y = this->mmu->Graphics_sprite_information[oamIterator++];
+			uint8_t x = this->mmu->Graphics_sprite_information[oamIterator++];
+			uint8_t tileIndex = this->mmu->Graphics_sprite_information[oamIterator++];
+			uint8_t options = this->mmu->Graphics_sprite_information[oamIterator++];
+
+			// check if sprite is in this scanline
+			if (y <= this->line && y + 8 > this->line)
+			{
+				uint8_t palette = (options & 0x20 ? this->obp1 : this->obp0);
+				
+				for (int pix = 0; pix < 8; pix++)
+				{
+					if (x + pix >= 0 && x + pix < 160) // TODO: to extend
+					{
+						// select pixel
+						int pixelX = x + pix;
+						uint8_t low = this->mmu->Graphic_RAM[(tileIndex * 16) + (this->line - y) * 2];
+						uint8_t high = this->mmu->Graphic_RAM[(tileIndex * 16) + (this->line - y) * 2 + 1];
+
+						// decode color value
+						int colorBit = 7 - (pixelX % 8);
+						int color = ((high >> colorBit) & 1) << 1 | ((low >> colorBit) & 1);
+
+						// write to buffer
+						uint8_t pixelColor = (palette >> (color * 2)) & 0x03;
+						this->framebuffer[this->line * 160 + x + pix] = this->color_palette[pixelColor];
+					}
+				}
+			}
+		}
+	}
+
+	void renderscan_background()
+	{
 		// get vram sector selected in lcdc register
-		uint8_t* tileMap = (this->lcdc & 0x08) ? &vram[0x1C00] : &vram[0x1800];
-		uint8_t* tileData = (this->lcdc & 0x10) ? &vram[0x0000] : &vram[0x0800];
-
-		// get scx and scy from mmu
-
+		uint8_t* tileMap = (this->lcdc & 0x08) ? &this->mmu->Graphic_RAM[0x1C00] : &this->mmu->Graphic_RAM[0x1800];
+		uint8_t* tileData = (this->lcdc & 0x10) ? &this->mmu->Graphic_RAM[0x0000] : &this->mmu->Graphic_RAM[0x0800];
 
 		// calculate tile row
 		int y = (this->line + this->scy) & 0xFF;
@@ -139,14 +212,10 @@ public:
 
 			int colorBit = 7 - (pixelX % 8);
 			int color = ((high >> colorBit) & 1) << 1 | ((low >> colorBit) & 1);
-			
-			uint8_t pixelColor = (bgp >> (color * 2)) & 0x03;
-			this->framebuffer[this->line * 160 + x] = color_palette[pixelColor];
-		}
 
-		ready_to_render = true;
-		// printf("Rendered\n");
-		// getchar(); getchar();
+			uint8_t pixelColor = (this->bgp >> (color * 2)) & 0x03;
+			this->framebuffer[this->line * 160 + x] = this->color_palette[pixelColor];
+		}
 	}
 };
 

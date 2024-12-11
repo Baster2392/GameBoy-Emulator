@@ -8,7 +8,6 @@ public:
     ~Renderer();
 
     void render(const uint8_t* framebuffer);
-    bool handleEvents();
 
 private:
     SDL_Window* window;

@@ -80,28 +80,28 @@ public:
                     switch (event.key.keysym.scancode)
                     {
                     case SDL_SCANCODE_D:
-                        this->rows_values[1] |= 0xE;
+                        this->rows_values[1] |= 0x1;
                         break;
                     case SDL_SCANCODE_A:
-                        this->rows_values[1] |= 0xD;
+                        this->rows_values[1] |= 0x2;
                         break;
                     case SDL_SCANCODE_W:
-                        this->rows_values[1] |= 0xB;
+                        this->rows_values[1] |= 0x4;
                         break;
                     case SDL_SCANCODE_S:
-                        this->rows_values[1] |= 0x7;
+                        this->rows_values[1] |= 0x8;
                         break;
                     case SDL_SCANCODE_K:
-                        this->rows_values[0] |= 0xE;
+                        this->rows_values[0] |= 0x1;
                         break;
                     case SDL_SCANCODE_L:
-                        this->rows_values[0] |= 0xD;
+                        this->rows_values[0] |= 0x2;
                         break;
                     case SDL_SCANCODE_KP_ENTER:
-                        this->rows_values[0] |= 0xB;
+                        this->rows_values[0] |= 0x4;
                         break;
                     case SDL_SCANCODE_SPACE:
-                        this->rows_values[0] |= 0x7;
+                        this->rows_values[0] |= 0x8;
                         break;
                     case SDL_SCANCODE_Q:
                         *running = false;

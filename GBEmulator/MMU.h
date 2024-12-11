@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <stdio.h>
+#include <memory>
 #include "KeyboardHandler.h"
 
 class MMU
@@ -16,9 +17,9 @@ public:
     uint8_t Graphics_sprite_information[0xA0];
     uint8_t Memory_mapped_IO[0x80];
     uint8_t Zero_page_RAM[0x80];
-    KeyboardHandler* keyboardHandler;
+    shared_ptr<KeyboardHandler> keyboardHandler;
 
-    MMU(KeyboardHandler* keyboardHandler)
+    MMU(shared_ptr<KeyboardHandler> keyboardHandler)
     {
         this->keyboardHandler = keyboardHandler;
     }
@@ -89,7 +90,9 @@ public:
             if (address == 0xFF00)
             {
                 keyboardHandler->write_value(value);
+                return;
             }
+
             Memory_mapped_IO[address - 0xFF00] = value;
         }
         else if (address >= 0xFF80 && address <= 0xFFFF) {  // [FF80-FFFF] Zero-page RAM

@@ -6,6 +6,7 @@
 #include <thread>
 #include <functional>
 #include <array>
+#include <memory>
 #include "MMU.h"
 #include "GPU.h"
 #include "Renderer.h"
@@ -28,15 +29,17 @@ public:
 	std::uint8_t F;
 	// stack pointer, program counter
 	std::uint16_t SP, PC;
+	// Interrupt master enable flag
+	std::uint8_t IME;
 	// cycles counter
 	int cycles;
 
 	// Keyboard handler
-	KeyboardHandler keyboardHandler;
+	shared_ptr<KeyboardHandler> keyboardHandler = make_shared<KeyboardHandler>();
 	// Memory Management Unit
-	MMU mmu = MMU(&keyboardHandler);
+	MMU mmu = MMU(keyboardHandler);
 	// Graphic Processing Unit
-	GPU gpu = GPU(mmu.Graphic_RAM, mmu.Graphics_sprite_information);
+	GPU gpu = GPU(&mmu);
 	// Renderer
 	Renderer renderer;
 
@@ -44,11 +47,12 @@ public:
 
 	// Opcode table
 	static constexpr size_t OPCODE_COUNT = 256;
-	std::array<std::function<void()>, OPCODE_COUNT> opcodeTable;
+	std::array<std::function<void()>, OPCODE_COUNT> opcodeTable, opcodeTableBitOperations;
 	void initializeOpcodeTable();
 
 	// CPU actions
 	void executeOpcode(std::uint8_t opcode);
+	void handlePrefix();
 	std::uint8_t readMemory(std::uint16_t addressToRead);
 	std::uint8_t readInstruction(std::uint16_t addressToRead);
 	void writeMemory(std::uint16_t addressToWrite, std::uint8_t value);
@@ -386,6 +390,16 @@ public:
 	*/
 	void LD_SP_HL();
 
+	/*
+		Store value in register A into the byte at address $FF00+C.
+	*/
+	void LDH_ar8_A(uint8_t* reg);
+
+	/*
+		Load value in register A from the byte at address $FF00+c.
+	*/
+	void LDH_A_ar8(uint8_t* reg);
+
 	/*** Jump, call instructions ***/
 
 	/*
@@ -501,5 +515,35 @@ public:
 		Rotate register A right with carry flag.
 	*/
 	void RRA();
+
+	/*
+		Rotate register r8 right, through the carry flag.
+	*/
+	void RR_r8(uint8_t* reg);
+
+	/*
+		Rotate register left with carry flag.
+	*/
+	void RCL_r8(uint8_t* reg);
+
+	/*
+		Shift Right Logically register r8.
+	*/
+	void SRL_r8(uint8_t* reg);
+
+	/*
+		Check bit n in reg register
+	*/
+	void BIT_n_r8(uint8_t n, uint8_t* reg);
+
+	/*
+		Set bit n in reg register
+	*/
+	void SET_n_r8(uint8_t n, uint8_t* reg);
+
+	/*
+		Swap the upper 4 bits in register r8 and the lower 4 ones.
+	*/
+	void SWAP_r8(uint8_t* reg);
 };
 

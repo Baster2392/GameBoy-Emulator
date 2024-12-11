@@ -16,7 +16,7 @@ atomic <bool> running(true);
 void load_ROM_procedure(CPU& cpu)
 {
 	FILE* file;
-	fopen_s(&file, "ROMs/opus_tests/ttt.gb", "rb");
+	fopen_s(&file, "ROMs/opus_tests/opus3.gb", "rb");
 	// fopen_s(&file, "ROMs/instruction_tests/09-op r,r.gb", "rb");
 
 	if (!file)
@@ -61,7 +61,7 @@ int main()
 	cpu.PC = 0x100;
 
 	std::thread cpuThread(cpu_loop, std::ref(cpu));	// cpu thread
-	cpu.keyboardHandler.handleInput(&running);	// input thread
+	cpu.keyboardHandler->handleInput(&running);	// input thread
 	
 	cpuThread.join();
 	SDL_Quit();

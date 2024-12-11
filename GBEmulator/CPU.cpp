@@ -7,6 +7,9 @@ CPU::CPU()
 
 void CPU::initializeOpcodeTable() {
 	opcodeTable.fill([this]() { std::cout << "Unknown opcode\n"; });
+	opcodeTableBitOperations.fill([this](){
+		printf("Unknown opcode with prefix: %x\n", readInstruction(this->PC - 1));
+		});
 
 	opcodeTable[0x00] = [this]() { NOP(); };
 	opcodeTable[0x10] = [this]() { STOP(); };
@@ -54,8 +57,8 @@ void CPU::initializeOpcodeTable() {
 	opcodeTable[0xB2] = [this]() { OR_A_r8(this->D); };
 	opcodeTable[0xC2] = [this]() { JP_cc_a16(NZ_flag()); };
 	opcodeTable[0xD2] = [this]() { JP_cc_a16(NC_flag()); };
-	opcodeTable[0xE2] = [this]() { exit(0); }; // TODO: LD [C], A
-	opcodeTable[0xF2] = [this]() { exit(0); }; // TODO: LD A, [C]
+	opcodeTable[0xE2] = [this]() { LDH_ar8_A(&(this->C)); };
+	opcodeTable[0xF2] = [this]() { LDH_A_ar8(&(this->C)); };
 	opcodeTable[0x03] = [this]() { INC_r8r8(&(this->B), &(this->C)); };
 	opcodeTable[0x13] = [this]() { INC_r8r8(&(this->D), &(this->E)); };
 	opcodeTable[0x23] = [this]() { INC_r8r8(&(this->H), &(this->L)); };
@@ -192,7 +195,7 @@ void CPU::initializeOpcodeTable() {
 	opcodeTable[0x9B] = [this]() { SBC_A_r8(this->E); };
 	opcodeTable[0xAB] = [this]() { XOR_A_r8(this->E); };
 	opcodeTable[0xBB] = [this]() { CP_A_r8(this->E); };
-	opcodeTable[0xCB] = [this]() { std::cout << "Prefix!!!!!!!\n"; }; // Debug info
+	opcodeTable[0xCB] = [this]() { handlePrefix(); };
 	opcodeTable[0xFB] = [this]() { EI(); };
 	opcodeTable[0x0C] = [this]() { INC_r8(&(this->C)); };
 	opcodeTable[0x1C] = [this]() { INC_r8(&(this->E)); };
@@ -253,12 +256,33 @@ void CPU::initializeOpcodeTable() {
 	opcodeTable[0xDF] = [this]() { RST(0x18); };
 	opcodeTable[0xEF] = [this]() { RST(0x28); };
 	opcodeTable[0xFF] = [this]() { RST(0x38); };
+
+	opcodeTableBitOperations[0x1] = [this]() { RCL_r8(&(this->C)); };
+	opcodeTableBitOperations[0x2] = [this]() { RCL_r8(&(this->D)); };
+	opcodeTableBitOperations[0x7] = [this]() { RCL_r8(&(this->A)); };
+	opcodeTableBitOperations[0x19] = [this]() { RR_r8(&(this->C)); };
+	opcodeTableBitOperations[0x1A] = [this]() { RR_r8(&(this->D)); };
+	opcodeTableBitOperations[0x1B] = [this]() { RR_r8(&(this->E)); };
+	opcodeTableBitOperations[0x37] = [this]() { SWAP_r8(&(this->A)); };
+	opcodeTableBitOperations[0x38] = [this]() { SRL_r8(&(this->B)); };
+	opcodeTableBitOperations[0x47] = [this]() { BIT_n_r8(0, &(this->A)); };
+	opcodeTableBitOperations[0x67] = [this]() { BIT_n_r8(4, &(this->A)); };
+	opcodeTableBitOperations[0x6F] = [this]() { BIT_n_r8(5, &(this->A)); };
+	opcodeTableBitOperations[0x77] = [this]() { BIT_n_r8(6, &(this->A)); };
+	opcodeTableBitOperations[0x7F] = [this]() { BIT_n_r8(7, &(this->A)); };
+	opcodeTableBitOperations[0xC1] = [this]() { SET_n_r8(0, &(this->C)); };
 }
 
 
 void CPU::executeOpcode(std::uint8_t opcode)
 {
 	opcodeTable[opcode]();
+}
+
+void CPU::handlePrefix()
+{
+	uint8_t opcode = readInstruction(this->PC++);
+	opcodeTableBitOperations[opcode]();
 }
 
 std::uint8_t CPU::readMemory(std::uint16_t addressToRead)
@@ -307,6 +331,12 @@ void CPU::writeMemory(std::uint16_t addressToWrite, std::uint8_t value)
 		break;
 	case 0xFF47:
 		this->gpu.bgp = value;
+		break;
+	case 0xFF48:
+		this->gpu.obp0 = value;
+		break;
+	case 0xFF49:
+		this->gpu.obp1 = value;
 		break;
 	default:
 		mmu.write_memory(addressToWrite, value);
@@ -364,9 +394,27 @@ void CPU::step()
 {
 	uint8_t opcode = readInstruction(this->PC);
 	this->PC++;
+	// FILE* file;
+	// fopen_s(&file, "ROMs/opcodesttt2.txt", "a");
+	// fprintf(file, "%x\n", opcode);
+	// fclose(file);
 	// printf("Executing opcode %x...\n", opcode);
 	executeOpcode(opcode);
 	gpu.step(this->cycles);
+
+	if (this->IME)	// if interrupts are enabled
+	{
+		uint8_t interrupt_enable_flags = mmu.read_memory(0xFFFF);
+		uint8_t interrupt_flags = mmu.read_memory(0xFF0F);
+		uint8_t enabled = interrupt_enable_flags & interrupt_flags;
+
+		if (enabled & 0x01)
+		{
+			mmu.write_memory(0xFF0F, 255 - 0x01);
+			this->IME = 0;
+			RST(0x40);
+		}
+	}
 
 	if (gpu.ready_to_render)
 	{
@@ -472,6 +520,88 @@ void CPU::RRA()
 	this->cycles += 4;
 }
 
+void CPU::RR_r8(uint8_t* reg)
+{
+	bool cf = *reg & 0x1;
+	*reg >>= 1;
+	if (this->C_flag())
+	{
+		*reg += 0b10000000;
+	}
+
+	// set flags
+	setFlag('Z', *reg == 0);
+	setFlag('N', false);
+	setFlag('H', false);
+	setFlag('C', cf);
+
+	this->cycles += 8;
+}
+
+void CPU::RCL_r8(uint8_t* reg)
+{
+	bool cf = *reg >= 0b10000000;
+	*reg <<= 1;
+	*reg += this->C_flag();
+
+	// set flags
+	setFlag('Z', *reg == 0);
+	setFlag('N', false);
+	setFlag('H', false);
+	setFlag('C', cf);
+
+	this->cycles += 8;
+}
+
+void CPU::SRL_r8(uint8_t* reg)
+{
+	bool cf = *reg & 0x1;
+	*reg >>= 1;
+
+	// set flags
+	setFlag('Z', *reg == 0);
+	setFlag('N', false);
+	setFlag('H', false);
+	setFlag('C', cf);
+
+	this->cycles += 8;
+}
+
+void CPU::BIT_n_r8(uint8_t n, uint8_t* reg)
+{
+	uint8_t bit = 1 << n;
+	bool result = (*reg & bit) > 0;
+	
+	// set flags
+	setFlag('Z', !result);
+	setFlag('N', false);
+	setFlag('H', true);
+
+	this->cycles += 8;
+}
+
+void CPU::SET_n_r8(uint8_t n, uint8_t* reg)
+{
+	uint8_t bit = 1 << n;
+	*reg |= bit;
+	this->cycles += 8;
+}
+
+void CPU::SWAP_r8(uint8_t* reg)
+{
+	uint8_t upper = *reg >> 4;
+	*reg <<= 4;
+	*reg += upper;
+
+	// set flags
+	setFlag('Z', *reg == 0);
+	setFlag('N', false);
+	setFlag('H', false);
+	setFlag('C', false);
+
+	this->cycles += 8;
+}
+
 void CPU::JR_cc_e8(bool cc)
 {
 	if (cc)
@@ -518,7 +648,7 @@ void CPU::JP_HL()
 
 void CPU::CALL()
 {
-	PUSH_r16(this->PC + 3);	// push address of next instruction
+	PUSH_r16(this->PC + 2);	// push address of next instruction
 
 	// read address from instruction set
 	uint16_t address = readInstruction(this->PC);
@@ -547,9 +677,8 @@ void CPU::CALL_cc_a16(bool cc)
 
 void CPU::RST(std::uint16_t vectorAddress)
 {
-	PUSH_r16(this->PC + 1);
+	PUSH_r16(this->PC);
 	this->PC = vectorAddress;
-	this->cycles += 16;
 }
 
 void CPU::RLC_r8(std::uint8_t* reg)
@@ -598,16 +727,17 @@ void CPU::CPL()
 void CPU::DAA()
 {
 	this->cycles += 4;
-	exit(0);
 }
 
 void CPU::DI()
 {
+	this->IME = 0;
 	this->cycles += 4;
 }
 
 void CPU::EI()
 {
+	this->IME = 1;
 	this->cycles += 4;
 }
 
@@ -694,13 +824,13 @@ void CPU::ADD_HL_r8r8(std::uint8_t* reg1, std::uint8_t* reg2)
 	uint16_t r1r2Value = uint16_t((*reg1) << 8) + uint16_t(*reg2);
 	uint16_t result = hlValue + r1r2Value;
 
+	setFlag('N', false);
+	setFlag('H', ((hlValue & 0x0FFF) + (r1r2Value & 0x0FFF)) > 0x0FFF);
+	setFlag('C', hlValue + r1r2Value > 0xFFFF);
+
 	hlValue += r1r2Value;
 	this->H = uint8_t(hlValue >> 8);
 	this->L = uint8_t(hlValue & 0xFF);
-
-	setFlag('N', false);
-	setFlag('H', ((hlValue & 0x0FFF) + (r1r2Value & 0x0FFF)) > 0x0FFF);
-	setFlag('C', result > 0xFFFF);
 
 	this->cycles += 8;
 }
@@ -710,8 +840,8 @@ void CPU::ADD_HL_r16(std::uint16_t* reg)
 	uint16_t HL_value = (this->H << 8) + this->L;
 
 	setFlag('N', false);
-	setFlag('H', ((HL_value & 0x0FFF) + (HL_value & 0x0FFF)) > 0x0FFF);
-	setFlag('C', uint16_t(this->SP + HL_value) > 0xFFFF);
+	setFlag('H', ((*reg & 0x0FFF) + (HL_value & 0x0FFF)) > 0x0FFF);
+	setFlag('C', this->SP + HL_value > 0xFFFF);
 
 	HL_value += *(reg);
 	this->H = (HL_value >> 8);
@@ -1139,7 +1269,7 @@ void CPU::RET()
 	popedValue += uint16_t(readMemory(this->SP)) << 8;	// high
 	this->SP += 1;
 	
-	this->PC = popedValue - 1;
+	this->PC = popedValue;
 	this->cycles += 16;
 }
 
@@ -1333,6 +1463,20 @@ void CPU::LD_HL_SPe8()
 void CPU::LD_SP_HL()
 {
 	this->SP = (this->H << 8) + this->L;
+	this->cycles += 8;
+}
+
+void CPU::LDH_ar8_A(uint8_t* reg)
+{
+	uint16_t address = 0xFF00 + *reg;
+	writeMemory(address, this->A);
+	this->cycles += 8;
+}
+
+void CPU::LDH_A_ar8(uint8_t* reg)
+{
+	uint16_t address = 0xFF00 + *reg;
+	this->A = readMemory(address);
 	this->cycles += 8;
 }
 
