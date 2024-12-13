@@ -12,6 +12,8 @@ class KeyboardHandler
     uint8_t column_value = 0;
 
 public:
+    bool interrupt_happened = false;
+
     void write_value(uint8_t value)
     {
         this->column_value = value & 0x30;
@@ -46,27 +48,35 @@ public:
                     {
                     case SDL_SCANCODE_D:
                         this->rows_values[1] &= 0xE;
+                        this->interrupt_happened = true;
                         break;
                     case SDL_SCANCODE_A:
                         this->rows_values[1] &= 0xD;
+                        this->interrupt_happened = true;
                         break;
                     case SDL_SCANCODE_W:
                         this->rows_values[1] &= 0xB;
+                        this->interrupt_happened = true;
                         break;
                     case SDL_SCANCODE_S:
                         this->rows_values[1] &= 0x7;
+                        this->interrupt_happened = true;
                         break;
                     case SDL_SCANCODE_K:
                         this->rows_values[0] &= 0xE;
+                        this->interrupt_happened = true;
                         break;
                     case SDL_SCANCODE_L:
                         this->rows_values[0] &= 0xD;
+                        this->interrupt_happened = true;
                         break;
                     case SDL_SCANCODE_KP_ENTER:
                         this->rows_values[0] &= 0xB;
+                        this->interrupt_happened = true;
                         break;
                     case SDL_SCANCODE_SPACE:
                         this->rows_values[0] &= 0x7;
+                        this->interrupt_happened = true;
                         break;
                     case SDL_SCANCODE_Q:
                         *running = false;

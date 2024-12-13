@@ -68,7 +68,7 @@ public:
 
 		switch (this->mode)
 		{
-		case 2:	// OAM read mode, scalnine active
+		case 2:	// OAM read mode, scanline active
 			if (this->mode_clock >= 80)
 			{
 				uint16_t sprite_info_address = this->mmu->read_memory(0xFF46) << 8;	// read location of sprite attributes in working memory
@@ -138,6 +138,11 @@ public:
 			renderscan_background();
 		}
 
+		if (this->lcdc & 0x20)
+		{
+			renderscan_window();
+		}
+
 		if (this->lcdc & 0x2)
 		{
 			renderscan_sprites();
@@ -151,8 +156,8 @@ public:
 		for (int i = 0; i < 40; i++)
 		{
 			// read sprite from memory
-			uint8_t y = this->mmu->Graphics_sprite_information[oamIterator++];
-			uint8_t x = this->mmu->Graphics_sprite_information[oamIterator++];
+			uint8_t y = this->mmu->Graphics_sprite_information[oamIterator++] - 8;
+			uint8_t x = this->mmu->Graphics_sprite_information[oamIterator++] - 16;
 			uint8_t tileIndex = this->mmu->Graphics_sprite_information[oamIterator++];
 			uint8_t options = this->mmu->Graphics_sprite_information[oamIterator++];
 
@@ -213,6 +218,40 @@ public:
 		for (int x = 0; x < 160; x++) {
 			// select pixel using scx register
 			int pixelX = (x + this->scx) & 0xFF;
+			int tileCol = pixelX / 8;
+			int tileIndex = tileMap[tileRow + tileCol];
+			uint8_t tileLine = (y % 8) * 2;
+
+			uint8_t low = tileData[tileIndex * 16 + tileLine];
+			uint8_t high = tileData[tileIndex * 16 + tileLine + 1];
+
+			int colorBit = 7 - (pixelX % 8);
+			int color = ((high >> colorBit) & 1) << 1 | ((low >> colorBit) & 1);
+
+			uint8_t pixelColor = (this->bgp >> (color * 2)) & 0x03;
+			this->framebuffer[this->line * 160 + x] = this->color_palette[pixelColor];
+		}
+	}
+
+	void renderscan_window()
+	{
+		if (this->line < this->wy)
+		{
+			return;
+		}
+
+		// get vram sector selected in lcdc register
+		uint8_t* tileMap = (this->lcdc & 0x40) ? &this->mmu->Graphic_RAM[0x1C00] : &this->mmu->Graphic_RAM[0x1800];
+		uint8_t* tileData = (this->lcdc & 0x10) ? &this->mmu->Graphic_RAM[0x0000] : &this->mmu->Graphic_RAM[0x0800];
+
+		// calculate tile row
+		int y = (this->line + this->wy) & 0xFF;
+		int tileRow = (y / 8) * 32;
+
+		for (int x = 0; x < 160; x++)
+		{
+			// select pixel using scx register
+			int pixelX = (x + this->wy) & 0xFF;
 			int tileCol = pixelX / 8;
 			int tileIndex = tileMap[tileRow + tileCol];
 			uint8_t tileLine = (y % 8) * 2;

@@ -16,7 +16,7 @@ atomic <bool> running(true);
 void load_ROM_procedure(CPU& cpu)
 {
 	FILE* file;
-	fopen_s(&file, "ROMs/opus_tests/opus5.gb", "rb");
+	fopen_s(&file, "ROMs/opus_tests/opus6.gb", "rb");
 	// fopen_s(&file, "ROMs/instruction_tests/09-op r,r.gb", "rb");
 
 	if (!file)

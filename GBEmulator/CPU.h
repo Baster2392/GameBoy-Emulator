@@ -547,6 +547,11 @@ public:
 	void SET_n_r8(uint8_t n, uint8_t* reg);
 
 	/*
+		Reset bit n in reg register
+	*/
+	void RES_n_r8(uint8_t n, uint8_t* reg);
+
+	/*
 		Swap the upper 4 bits in register r8 and the lower 4 ones.
 	*/
 	void SWAP_r8(uint8_t* reg);

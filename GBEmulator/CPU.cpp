@@ -90,7 +90,7 @@ void CPU::initializeOpcodeTable() {
 	opcodeTable[0x05] = [this]() { DEC_r8(&(this->B)); };
 	opcodeTable[0x15] = [this]() { DEC_r8(&(this->D)); };
 	opcodeTable[0x25] = [this]() { DEC_r8(&(this->H)); };
-	opcodeTable[0x35] = [this]() { DEC_r8r8(&(this->H), &(this->L)); };
+	opcodeTable[0x35] = [this]() { DEC_aHL(); };
 	opcodeTable[0x45] = [this]() { LD_r8_r8(&(this->B), &(this->L)); };
 	opcodeTable[0x55] = [this]() { LD_r8_r8(&(this->D), &(this->L)); };
 	opcodeTable[0x65] = [this]() { LD_r8_r8(&(this->H), &(this->L)); };
@@ -268,10 +268,16 @@ void CPU::initializeOpcodeTable() {
 	opcodeTableBitOperations[0x37] = [this]() { SWAP_r8(&(this->A)); };
 	opcodeTableBitOperations[0x38] = [this]() { SRL_r8(&(this->B)); };
 	opcodeTableBitOperations[0x47] = [this]() { BIT_n_r8(0, &(this->A)); };
+	opcodeTableBitOperations[0x4F] = [this]() { BIT_n_r8(1, &(this->A)); };
+	opcodeTableBitOperations[0x60] = [this]() { BIT_n_r8(4, &(this->B)); };
 	opcodeTableBitOperations[0x67] = [this]() { BIT_n_r8(4, &(this->A)); };
+	opcodeTableBitOperations[0x68] = [this]() { BIT_n_r8(5, &(this->B)); };
 	opcodeTableBitOperations[0x6F] = [this]() { BIT_n_r8(5, &(this->A)); };
+	opcodeTableBitOperations[0x70] = [this]() { BIT_n_r8(6, &(this->B)); };
 	opcodeTableBitOperations[0x77] = [this]() { BIT_n_r8(6, &(this->A)); };
+	opcodeTableBitOperations[0x78] = [this]() { BIT_n_r8(7, &(this->B)); };
 	opcodeTableBitOperations[0x7F] = [this]() { BIT_n_r8(7, &(this->A)); };
+	opcodeTableBitOperations[0x87] = [this]() { RES_n_r8(0, &(this->A)); };
 	opcodeTableBitOperations[0xC1] = [this]() { SET_n_r8(0, &(this->C)); };
 }
 
@@ -303,6 +309,12 @@ std::uint8_t CPU::readMemory(std::uint16_t addressToRead)
 		break;
 	case 0xFF44:
 		value = gpu.line;
+		break;
+	case 0xFF4A:
+		value = gpu.wy;
+		break;
+	case 0xFF4B:
+		value = gpu.wx;
 		break;
 	default:
 		value = mmu.read_memory(addressToRead);
@@ -339,6 +351,12 @@ void CPU::writeMemory(std::uint16_t addressToWrite, std::uint8_t value)
 		break;
 	case 0xFF49:
 		this->gpu.obp1 = value;
+		break;
+	case 0xFF4A:
+		this->gpu.wy = value;
+		break;
+	case 0xFF4B:
+		this->gpu.wx = value;
 		break;
 	default:
 		mmu.write_memory(addressToWrite, value);
@@ -410,11 +428,16 @@ void CPU::step()
 		uint8_t interrupt_flags = mmu.read_memory(0xFF0F);
 		uint8_t enabled = interrupt_enable_flags & interrupt_flags;
 
-		if (enabled & 0x01)
+		if (enabled & 0x01)	// v-blank interrupt
 		{
 			mmu.write_memory(0xFF0F, 255 - 0x01);
 			this->IME = 0;
 			RST(0x40);
+		} else if (interrupt_enable_flags & 0x10 && this->keyboardHandler->interrupt_happened)	// high-to-low key interrupt
+		{
+			this->keyboardHandler->interrupt_happened = false;
+			this->IME = 0;
+			RST(0x60);
 		}
 	}
 
@@ -600,6 +623,13 @@ void CPU::SET_n_r8(uint8_t n, uint8_t* reg)
 {
 	uint8_t bit = 1 << n;
 	*reg |= bit;
+	this->cycles += 8;
+}
+
+void CPU::RES_n_r8(uint8_t n, uint8_t* reg)
+{
+	uint8_t bit = 0b11111111 ^ (1 << n);
+	*reg &= bit;
 	this->cycles += 8;
 }
 
@@ -1502,6 +1532,7 @@ void CPU::JR_e8()
 	this->PC++;
 	
 	this->PC += offset;
+	
 	// printf("Jump at address %x to address: %x\n", this->PC - offset - 1, this->PC);
 
 	this->cycles += 12;
