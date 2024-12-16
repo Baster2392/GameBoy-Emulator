@@ -9,6 +9,8 @@
 #include <functional>
 #include <atomic>
 
+#define DEBUG_MODE false
+
 using namespace std;
 
 atomic <bool> running(true);
@@ -16,8 +18,8 @@ atomic <bool> running(true);
 void load_ROM_procedure(CPU& cpu)
 {
 	FILE* file;
-	fopen_s(&file, "ROMs/opus_tests/opus6.gb", "rb");
-	// fopen_s(&file, "ROMs/instruction_tests/09-op r,r.gb", "rb");
+	// fopen_s(&file, "ROMs/opus_tests/hello.gb", "rb");
+	fopen_s(&file, "ROMs/instruction_tests/07-jr,jp,call,ret,rst.gb", "rb");
 
 	if (!file)
 	{
@@ -56,7 +58,7 @@ int main()
 		exit(EXIT_FAILURE);
 	}
 
-	CPU cpu = CPU();
+	CPU cpu = CPU(DEBUG_MODE);
 	load_ROM_procedure(cpu);
 	cpu.PC = 0x100;
 

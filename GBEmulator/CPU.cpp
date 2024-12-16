@@ -1,13 +1,14 @@
 #include "CPU.h"
 
-CPU::CPU()
+CPU::CPU(bool debugMode)
 {
+	this->debugMode = debugMode;
 	this->initializeOpcodeTable();
 }
 
 void CPU::initializeOpcodeTable() {
-	opcodeTable.fill([this]() { std::cout << "Unknown opcode\n"; });
-	opcodeTableBitOperations.fill([this](){
+	opcodeTable.fill([this]() { printf("Unknown opcode: %x\n", readInstruction(this->PC - 1)); });
+	opcodeTableBitOperations.fill([this]() {
 		printf("Unknown opcode with prefix: %x\n", readInstruction(this->PC - 1));
 		});
 
@@ -94,7 +95,7 @@ void CPU::initializeOpcodeTable() {
 	opcodeTable[0x45] = [this]() { LD_r8_r8(&(this->B), &(this->L)); };
 	opcodeTable[0x55] = [this]() { LD_r8_r8(&(this->D), &(this->L)); };
 	opcodeTable[0x65] = [this]() { LD_r8_r8(&(this->H), &(this->L)); };
-	opcodeTable[0x75] = [this]() { LD_ar8r8_r8(&(this->H), &(this->L), this->H); };
+	opcodeTable[0x75] = [this]() { LD_ar8r8_r8(&(this->H), &(this->L), this->L); };
 	opcodeTable[0x85] = [this]() { ADD_A_r8(this->L); };
 	opcodeTable[0x95] = [this]() { SUB_A_r8(this->L); };
 	opcodeTable[0xA5] = [this]() { AND_A_r8(this->L); };
@@ -119,8 +120,8 @@ void CPU::initializeOpcodeTable() {
 	opcodeTable[0xD6] = [this]() { SUB_A_n8(); };
 	opcodeTable[0xE6] = [this]() { AND_A_n8(); };
 	opcodeTable[0xF6] = [this]() { OR_A_n8(); };
-	opcodeTable[0x07] = [this]() { RLC_r8(&(this->A)); };
-	opcodeTable[0x17] = [this]() { RL_r8(&(this->A)); };
+	opcodeTable[0x07] = [this]() { RLCA(); };
+	opcodeTable[0x17] = [this]() { RLA(); };
 	opcodeTable[0x27] = [this]() { DAA(); };
 	opcodeTable[0x37] = [this]() { SCF(); };
 	opcodeTable[0x47] = [this]() { LD_r8_r8(&(this->B), &(this->A)); };
@@ -257,18 +258,30 @@ void CPU::initializeOpcodeTable() {
 	opcodeTable[0xEF] = [this]() { RST(0x28); };
 	opcodeTable[0xFF] = [this]() { RST(0x38); };
 
-	opcodeTableBitOperations[0x1] = [this]() { RCL_r8(&(this->C)); };
-	opcodeTableBitOperations[0x2] = [this]() { RCL_r8(&(this->D)); };
-	opcodeTableBitOperations[0x7] = [this]() { RCL_r8(&(this->A)); };
+	opcodeTableBitOperations[0x1] = [this]() { RLC_r8(&(this->C)); };
+	opcodeTableBitOperations[0x2] = [this]() { RLC_r8(&(this->D)); };
+	opcodeTableBitOperations[0x7] = [this]() { RLC_r8(&(this->A)); };
+	opcodeTableBitOperations[0x12] = [this]() { RL_r8(&(this->D)); };
+	opcodeTableBitOperations[0x13] = [this]() { RL_r8(&(this->E)); };
+	opcodeTableBitOperations[0x18] = [this]() { RR_r8(&(this->B)); };
 	opcodeTableBitOperations[0x19] = [this]() { RR_r8(&(this->C)); };
 	opcodeTableBitOperations[0x23] = [this]() { SLA_r8(&(this->E)); };
 	opcodeTableBitOperations[0x27] = [this]() { SLA_r8(&(this->A)); };
 	opcodeTableBitOperations[0x1A] = [this]() { RR_r8(&(this->D)); };
 	opcodeTableBitOperations[0x1B] = [this]() { RR_r8(&(this->E)); };
+	opcodeTableBitOperations[0x33] = [this]() { SWAP_r8(&(this->E)); };
 	opcodeTableBitOperations[0x37] = [this]() { SWAP_r8(&(this->A)); };
 	opcodeTableBitOperations[0x38] = [this]() { SRL_r8(&(this->B)); };
+	opcodeTableBitOperations[0x3F] = [this]() { SRL_r8(&(this->A)); };
+	opcodeTableBitOperations[0x40] = [this]() { BIT_n_r8(0, &(this->B)); };
+	opcodeTableBitOperations[0x42] = [this]() { BIT_n_r8(0, &(this->D)); };
 	opcodeTableBitOperations[0x47] = [this]() { BIT_n_r8(0, &(this->A)); };
+	opcodeTableBitOperations[0x4A] = [this]() { BIT_n_r8(1, &(this->D)); };
 	opcodeTableBitOperations[0x4F] = [this]() { BIT_n_r8(1, &(this->A)); };
+	opcodeTableBitOperations[0x50] = [this]() { BIT_n_r8(2, &(this->B)); };
+	opcodeTableBitOperations[0x57] = [this]() { BIT_n_r8(2, &(this->A)); };
+	opcodeTableBitOperations[0x58] = [this]() { BIT_n_r8(3, &(this->B)); };
+	opcodeTableBitOperations[0x5F] = [this]() { BIT_n_r8(3, &(this->A)); };
 	opcodeTableBitOperations[0x60] = [this]() { BIT_n_r8(4, &(this->B)); };
 	opcodeTableBitOperations[0x67] = [this]() { BIT_n_r8(4, &(this->A)); };
 	opcodeTableBitOperations[0x68] = [this]() { BIT_n_r8(5, &(this->B)); };
@@ -276,7 +289,10 @@ void CPU::initializeOpcodeTable() {
 	opcodeTableBitOperations[0x70] = [this]() { BIT_n_r8(6, &(this->B)); };
 	opcodeTableBitOperations[0x77] = [this]() { BIT_n_r8(6, &(this->A)); };
 	opcodeTableBitOperations[0x78] = [this]() { BIT_n_r8(7, &(this->B)); };
+	opcodeTableBitOperations[0x7A] = [this]() { BIT_n_r8(7, &(this->D)); };
+	opcodeTableBitOperations[0x7E] = [this]() { BIT_n_aHL(7); };
 	opcodeTableBitOperations[0x7F] = [this]() { BIT_n_r8(7, &(this->A)); };
+	opcodeTableBitOperations[0x86] = [this]() { RES_n_aHL(0); };
 	opcodeTableBitOperations[0x87] = [this]() { RES_n_r8(0, &(this->A)); };
 	opcodeTableBitOperations[0xC1] = [this]() { SET_n_r8(0, &(this->C)); };
 }
@@ -301,6 +317,9 @@ std::uint8_t CPU::readMemory(std::uint16_t addressToRead)
 	case 0xFF40:
 		value = gpu.lcdc;
 		break;
+	case 0xFF41:
+		value = gpu.stat;
+		break;
 	case 0xFF42:
 		value = gpu.scy;
 		break;
@@ -309,6 +328,9 @@ std::uint8_t CPU::readMemory(std::uint16_t addressToRead)
 		break;
 	case 0xFF44:
 		value = gpu.line;
+		break;
+	case 0xFF45:
+		value = gpu.lyc;
 		break;
 	case 0xFF4A:
 		value = gpu.wy;
@@ -321,7 +343,7 @@ std::uint8_t CPU::readMemory(std::uint16_t addressToRead)
 		break;
 	}
 
-	// printf("Odczytano wartosc: %x z adresu: %x\n", value, addressToRead);
+	if (this->debugMode) printf("Odczytano wartosc: %x z adresu: %x\n", value, addressToRead);
 	return value;
 }
 
@@ -337,11 +359,17 @@ void CPU::writeMemory(std::uint16_t addressToWrite, std::uint8_t value)
 	case 0xFF40:
 		this->gpu.lcdc = value;
 		break;
+	case 0xFF41:
+		this->gpu.stat = value;
+		break;
 	case 0xFF42:
 		this->gpu.scy = value;
 		break;
 	case 0xFF43:
 		this->gpu.scx = value;
+		break;
+	case 0xFF45:
+		this->gpu.lyc = value;
 		break;
 	case 0xFF47:
 		this->gpu.bgp = value;
@@ -363,7 +391,7 @@ void CPU::writeMemory(std::uint16_t addressToWrite, std::uint8_t value)
 		break;
 	}
 
-	// printf("Zapisano wartosc: %x pod adresem %x\n", value, addressToWrite);
+	if (this->debugMode) printf("Zapisano wartosc: %x pod adresem %x\n", value, addressToWrite);
 }
 
 void CPU::setFlag(char flag, bool value)
@@ -412,13 +440,18 @@ void CPU::setFlag(char flag, bool value)
 
 void CPU::step()
 {
+	if (this->gpu.line == 145)
+	{
+		printf("");
+	}
+
 	uint8_t opcode = readInstruction(this->PC);
 	this->PC++;
 	// FILE* file;
 	// fopen_s(&file, "ROMs/opcodesttt2.txt", "a");
 	// fprintf(file, "%x\n", opcode);
 	// fclose(file);
-	// printf("Executing opcode %x...\n", opcode);
+	if (this->debugMode) printf("%x: Executing opcode %x...\n", this->PC - 1, opcode);
 	executeOpcode(opcode);
 	gpu.step(this->cycles);
 
@@ -430,7 +463,7 @@ void CPU::step()
 
 		if (enabled & 0x01)	// v-blank interrupt
 		{
-			mmu.write_memory(0xFF0F, 255 - 0x01);
+			mmu.write_memory(0xFF0F, interrupt_flags - 0x01);
 			this->IME = 0;
 			RST(0x40);
 		} else if (interrupt_enable_flags & 0x10 && this->keyboardHandler->interrupt_happened)	// high-to-low key interrupt
@@ -438,6 +471,12 @@ void CPU::step()
 			this->keyboardHandler->interrupt_happened = false;
 			this->IME = 0;
 			RST(0x60);
+		}
+		else if (enabled & 0x02)
+		{
+			mmu.write_memory(0xFF0F, interrupt_flags - 0x02);
+			this->IME = 0;
+			RST(0x48);
 		}
 	}
 
@@ -454,22 +493,22 @@ void CPU::step()
 
 bool CPU::Z_flag()
 {
-	return this->F >= 0b10000000;
+	return uint8_t(this->F) >= 0b10000000;
 }
 
 bool CPU::N_flag()
 {
-	return (this->F << 1) >= 0b10000000;
+	return uint8_t(this->F << 1) >= 0b10000000;
 }
 
 bool CPU::H_flag()
 {
-	return (this->F << 2) >= 0b10000000;
+	return uint8_t(this->F << 2) >= 0b10000000;
 }
 
 bool CPU::C_flag()
 {
-	return (this->F << 3) >= 0b10000000;
+	return uint8_t(this->F << 3) >= 0b10000000;
 }
 
 bool CPU::NZ_flag()
@@ -510,6 +549,38 @@ void CPU::STOP()
 {
 	this->cycles += 0; // idk
 	this->PC++;
+}
+
+void CPU::RLCA()
+{
+	uint8_t msb = (this->A & 0x80) >> 7;
+
+	// set flags
+	setFlag('Z', false);
+	setFlag('N', false);
+	setFlag('H', false);
+	setFlag('C', msb);
+
+	this->A <<= 1;
+	this->A += msb;
+
+	this->cycles += 4;
+}
+
+void CPU::RLA()
+{
+	uint8_t msb = (this->A & 0x80) >> 7;
+	bool cf = C_flag();
+
+	setFlag('Z', false);
+	setFlag('N', false);
+	setFlag('H', false);
+	setFlag('C', msb);
+
+	this->A <<= 1;
+	this->A += cf;
+
+	this->cycles += 4;
 }
 
 void CPU::RRCA()
@@ -563,21 +634,6 @@ void CPU::RR_r8(uint8_t* reg)
 	this->cycles += 8;
 }
 
-void CPU::RCL_r8(uint8_t* reg)
-{
-	bool cf = *reg >= 0b10000000;
-	*reg <<= 1;
-	*reg += this->C_flag();
-
-	// set flags
-	setFlag('Z', *reg == 0);
-	setFlag('N', false);
-	setFlag('H', false);
-	setFlag('C', cf);
-
-	this->cycles += 8;
-}
-
 void CPU::SRL_r8(uint8_t* reg)
 {
 	bool cf = *reg & 0x1;
@@ -619,6 +675,21 @@ void CPU::BIT_n_r8(uint8_t n, uint8_t* reg)
 	this->cycles += 8;
 }
 
+void CPU::BIT_n_aHL(uint8_t n)
+{
+	uint16_t address = (this->H << 8) + this->L;
+	uint8_t value = readMemory(address);
+	uint8_t bit = 1 << n;
+	bool result = (value & bit) > 0;
+
+	// set flags
+	setFlag('Z', !result);
+	setFlag('N', false);
+	setFlag('H', true);
+
+	this->cycles += 12;
+}
+
 void CPU::SET_n_r8(uint8_t n, uint8_t* reg)
 {
 	uint8_t bit = 1 << n;
@@ -631,6 +702,17 @@ void CPU::RES_n_r8(uint8_t n, uint8_t* reg)
 	uint8_t bit = 0b11111111 ^ (1 << n);
 	*reg &= bit;
 	this->cycles += 8;
+}
+
+void CPU::RES_n_aHL(uint8_t n)
+{
+	uint16_t address = (this->H << 8) + this->L;
+	uint8_t value = readMemory(address);
+	uint8_t bit = 0b11111111 ^ (1 << n);
+
+	value &= bit;
+	writeMemory(address, value);
+	this->cycles += 12;
 }
 
 void CPU::SWAP_r8(uint8_t* reg)
@@ -730,7 +812,7 @@ void CPU::RST(std::uint16_t vectorAddress)
 void CPU::RLC_r8(std::uint8_t* reg)
 {
 	uint8_t value = *reg;
-	setFlag('Z', false);
+	setFlag('Z', *reg == 0);
 	setFlag('N', false);
 	setFlag('H', false);
 	setFlag('C', value >= 0b10000000);
@@ -746,10 +828,10 @@ void CPU::RL_r8(std::uint8_t* reg)
 	uint8_t value = *reg;
 	value <<= 1;
 	value += C_flag();
-	setFlag('Z', false);
+	setFlag('Z', value == 0);
 	setFlag('N', false);
 	setFlag('H', false);
-	setFlag('C', value >= 0b10000000);
+	setFlag('C', *reg >= 0b10000000);
 	*reg = value;
 
 	this->cycles += 4;
@@ -772,8 +854,42 @@ void CPU::CPL()
 
 void CPU::DAA()
 {
+	uint8_t adjustment = 0; // Wartoœæ korekty
+	bool carry = false;     // Flaga przeniesienia
+
+	// Korekta dla dodawania
+	if (!N_flag()) {
+		if (H_flag() || (A & 0x0F) > 9) {
+			adjustment += 0x06;
+		}
+		if (C_flag() || A > 0x99) {
+			adjustment += 0x60;
+			carry = true;
+		}
+	}
+	// Korekta dla odejmowania
+	else {
+		if (H_flag()) {
+			adjustment -= 0x06;
+		}
+		if (C_flag()) {
+			adjustment -= 0x60;
+		}
+	}
+
+	// Zastosowanie korekty
+	A += adjustment;
+
+	// Ustawianie flag
+	setFlag('Z', A == 0);    // Z = 1, jeœli wynik to 0
+	setFlag('N', N_flag());  // Flaga N pozostaje bez zmian
+	setFlag('H', false);     // H zawsze resetowana
+	setFlag('C', carry);     // Ustawienie C, jeœli by³o przeniesienie
+
 	this->cycles += 4;
 }
+
+
 
 void CPU::DI()
 {
@@ -810,7 +926,7 @@ void CPU::LD_HL_r8(std::uint8_t regValue)
 void CPU::ADD_A_r8(std::uint8_t reg)
 {
 	// set flags
-	setFlag('Z', this->A + reg == 0);
+	setFlag('Z', uint8_t(this->A + reg) == 0);
 	setFlag('N', false);
 	setFlag('H', ((this->A & 0x0F) + (reg & 0x0F)) > 0x0F);
 	setFlag('C', (uint16_t(this->A) + uint16_t(reg)) > 0xFF);
@@ -825,7 +941,7 @@ void CPU::ADD_A_ar8r8(std::uint8_t* reg1, std::uint8_t* reg2)
 	uint8_t value = readMemory(address);
 
 	// set flags
-	setFlag('Z', this->A + value == 0);
+	setFlag('Z', uint8_t(this->A + value) == 0);
 	setFlag('N', false);
 	setFlag('H', ((this->A & 0x0F) + (value & 0x0F)) > 0x0F);
 	setFlag('C', (uint16_t(this->A) + uint16_t(value)) > 0xFF);
@@ -840,7 +956,7 @@ void CPU::ADD_A_n8()
 	this->PC++;
 
 	// set flags
-	setFlag('Z', this->A + value == 0);
+	setFlag('Z', uint8_t(this->A + value) == 0);
 	setFlag('N', false);
 	setFlag('H', ((this->A & 0x0F) + (value & 0x0F)) > 0x0F);
 	setFlag('C', (uint16_t(this->A) + uint16_t(value)) > 0xFF);
@@ -854,15 +970,18 @@ void CPU::ADD_SP_e8()
 	int8_t value = readInstruction(this->PC);
 	this->PC++;
 
+	uint32_t result = uint32_t(this->SP) + uint32_t(value);
+
 	// set flags
 	setFlag('Z', false);
 	setFlag('N', false);
-	setFlag('H', ((this->SP & 0x0F) + (value & 0x0F)) > 0x0F);
-	setFlag('C', uint16_t(this->SP + value) > 0xFF);
+	setFlag('H', ((this->SP ^ value ^ result) & 0x10) != 0);
+	setFlag('C', ((this->SP ^ value ^ result) & 0x100) != 0);
 
-	this->SP += value;
+	this->SP = result & 0xFFFF;
 	this->cycles += 16;
 }
+
 
 void CPU::ADD_HL_r8r8(std::uint8_t* reg1, std::uint8_t* reg2)
 {
@@ -1066,9 +1185,9 @@ void CPU::ADC_A_r8(std::uint8_t reg)
 {
 	// set flags
 	bool cf = C_flag();
-	setFlag('Z', this->A + reg + cf == 0);
+	setFlag('Z', uint8_t(this->A + reg + cf) == 0);
 	setFlag('N', false);
-	setFlag('H', ((this->A & 0x0F) + ((reg + cf) & 0x0F)) > 0x0F);
+	setFlag('H', ((this->A & 0x0F) + (reg & 0x0F) + cf) > 0x0F);
 	setFlag('C', (uint16_t(this->A) + uint16_t(reg)) + cf > 0xFF);
 
 	this->A += reg + cf;
@@ -1082,9 +1201,9 @@ void CPU::ADC_A_ar8r8(std::uint8_t reg1, std::uint8_t reg2)
 
 	// set flags
 	bool cf = C_flag();
-	setFlag('Z', this->A + value + cf == 0);
+	setFlag('Z', uint8_t(this->A + value + cf) == 0);
 	setFlag('N', false);
-	setFlag('H', ((this->A & 0x0F) + ((value + cf) & 0x0F)) > 0x0F);
+	setFlag('H', ((this->A & 0x0F) + (value & 0x0F) + cf) > 0x0F);
 	setFlag('C', (uint16_t(this->A) + uint16_t(value)) + cf > 0xFF);
 
 	this->A += value + cf;
@@ -1097,10 +1216,10 @@ void CPU::ADC_A_n8()
 	this->PC++;
 
 	// set flags
-	bool cf = C_flag();
-	setFlag('Z', this->A + value + cf == 0);
+	uint8_t cf = C_flag();
+	setFlag('Z', uint8_t(this->A + value + cf) == 0);
 	setFlag('N', false);
-	setFlag('H', ((this->A & 0x0F) + ((value + cf) & 0x0F)) > 0x0F);
+	setFlag('H', ((this->A & 0x0F) + (value & 0x0F) + cf) > 0x0F);
 	setFlag('C', (uint16_t(this->A) + uint16_t(value)) + cf > 0xFF);
 
 	this->A += value + cf;
@@ -1111,10 +1230,10 @@ void CPU::SBC_A_r8(std::uint8_t reg)
 {
 	// set flags
 	bool cf = C_flag();
-	setFlag('Z', this->A - reg - cf == 0);
+	setFlag('Z', ((this->A - reg - cf) & 0xFF) == 0);
 	setFlag('N', true);
-	setFlag('H', ((this->A & 0x0F) < ((reg - cf) & 0x0F)));
-	setFlag('C', this->A < reg);
+	setFlag('H', ((this->A & 0x0F) - (reg & 0x0F) - cf) < 0);
+	setFlag('C', this->A - reg - cf < 0);
 
 	this->A -= reg + cf;
 	this->cycles += 4;
@@ -1127,10 +1246,10 @@ void CPU::SBC_A_ar8r8(std::uint8_t reg1, std::uint8_t reg2)
 
 	// set flags
 	bool cf = C_flag();
-	setFlag('Z', this->A - value - cf == 0);
+	setFlag('Z', ((this->A - value - cf) & 0xFF) == 0);
 	setFlag('N', true);
-	setFlag('H', ((this->A & 0x0F) < ((value - cf) & 0x0F)));
-	setFlag('C', this->A < value);
+	setFlag('H', ((this->A & 0x0F) - (value & 0x0F) - cf) < 0);
+	setFlag('C', this->A - value - cf < 0);
 
 	this->A -= value + cf;
 	this->cycles += 8;
@@ -1143,12 +1262,12 @@ void CPU::SBC_A_n8()
 
 	// set flags
 	bool cf = C_flag();
-	setFlag('Z', this->A - value - cf == 0);
+	setFlag('Z', ((this->A - value - cf) & 0xFF) == 0);
 	setFlag('N', true);
-	setFlag('H', ((this->A & 0x0F) < ((value - cf) & 0x0F)));
-	setFlag('C', this->A < value);
+	setFlag('H', ((this->A & 0x0F) - (value & 0x0F) - cf) < 0);
+	setFlag('C', this->A - value - cf < 0);
 
-	this->A -= value + cf;
+	this->A -= uint8_t(value + cf);
 	this->cycles += 8;
 }
 
@@ -1236,7 +1355,7 @@ void CPU::INC_r8r8(std::uint8_t* reg1, std::uint8_t* reg2)
 void CPU::DEC_r8(std::uint8_t* reg)
 {
 	// set flags
-	setFlag('Z', (*reg) - 1 == 0);
+	setFlag('Z', (*reg) == 1);
 	setFlag('N', true);
 	setFlag('H', ((*reg) & 0x0F) == 0);
 
@@ -1304,6 +1423,11 @@ void CPU::POP_r8r8(std::uint8_t* reg1, std::uint8_t* reg2)
 	this->SP += 1;
 	*reg1 = readMemory(this->SP);	// high
 	this->SP += 1;
+
+	if (reg1 == &this->A && reg2 == &this->F)
+	{
+		*reg2 &= 0xF0;
+	}
 
 	this->cycles += 12;
 }
@@ -1477,9 +1601,8 @@ void CPU::LD_a16_r16(uint16_t reg)
 	address += uint16_t(readInstruction(this->PC)) << 8;
 	this->PC++;
 
-	writeMemory(address, uint8_t(reg >> 8));	// high
-	address--;
-	writeMemory(address, uint8_t(reg & 0xFF));	// low
+	writeMemory(address, reg & 0xFF);
+	writeMemory(address + 1, reg >> 8);
 
 	this->cycles += 20;
 }
@@ -1487,18 +1610,19 @@ void CPU::LD_a16_r16(uint16_t reg)
 void CPU::LD_HL_SPe8()
 {
 	// read address from instruction set
-	int8_t e8 = readInstruction(this->PC);
+	int8_t value = readInstruction(this->PC);
 	this->PC++;
 
-	// set flags
-	setFlag('Z', this->A + e8 == 0);
-	setFlag('N', false);
-	setFlag('H', ((this->A & 0x0F) + (e8 & 0x0F)) > 0x0F);
-	setFlag('C', (uint16_t(this->A) + int16_t(e8)) > 0xFF);
+	uint32_t result = uint32_t(this->SP) + uint32_t(value);
 
-	uint16_t value = this->SP + e8;
-	uint8_t low = (value & 0xFF);
-	uint8_t high = value >> 8;
+	// set flags
+	setFlag('Z', false);
+	setFlag('N', false);
+	setFlag('H', ((this->SP ^ value ^ result) & 0x10) != 0);
+	setFlag('C', ((this->SP ^ value ^ result) & 0x100) != 0);
+
+	uint8_t low = (result & 0xFF);
+	uint8_t high = (result & 0xFF00) >> 8;
 
 	this->L = low;
 	this->H = high;
@@ -1533,7 +1657,7 @@ void CPU::JR_e8()
 	
 	this->PC += offset;
 	
-	// printf("Jump at address %x to address: %x\n", this->PC - offset - 1, this->PC);
+	if (this->debugMode) printf("Jump at address %x to address: %x\n", this->PC - offset - 1, this->PC);
 
 	this->cycles += 12;
 }

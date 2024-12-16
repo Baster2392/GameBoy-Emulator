@@ -23,7 +23,17 @@ public:
 		7 - Display: on/off	
 	*/
 	uint8_t lcdc;
-	uint8_t stat;            // Rejestr statusu GPU
+	/*
+		GPU status register:
+		bit
+		0, 1 - PPU status
+		2 - lyc == line
+		3 - gpu in 0 mode
+		4 - gpu in 1 mode
+		5 - gpu in 2 mode
+		6 - check lyc == line
+	*/
+	uint8_t stat;
 	uint8_t scy, scx;        // Scroll Y, Scroll X
 	uint8_t lyc;             // Porównanie z LY
 	uint8_t bgp;             // Paleta t³a
@@ -66,6 +76,11 @@ public:
 		// callculate cycles done in last performed instruction
 		this->mode_clock += cycles;
 
+		if (this->stat & 0x40)	// if bit is set, check condition lyc == line
+		{
+			this->stat = (this->lyc == this->line) ? this->stat | 0x04 : this->stat & 0xFB;
+		}
+
 		switch (this->mode)
 		{
 		case 2:	// OAM read mode, scanline active
@@ -82,6 +97,7 @@ public:
 
 				// Enter scanline mode 3
 				this->mode_clock = 0;
+				this->stat += 1;
 				this->mode = 3;
 			}
 			break;
@@ -90,6 +106,7 @@ public:
 			{
 				render_scanline();
 				this->mode_clock = 0;
+				this->stat -= 3;
 				this->mode = 0;
 			}
 			break;
@@ -102,10 +119,12 @@ public:
 				if (this->line == 143)
 				{
 					this->mode = 1;
+					this->stat += 1;
 					this->ready_to_render = true;
 				}
 				else
 				{
+					this->stat += 2;
 					this->mode = 2;
 				}
 			}
@@ -120,9 +139,13 @@ public:
 				{
 					// Restart scanning modes
 					this->mode = 2;
+					this->stat += 1;
 					this->line = 0;
 					// set v-blank happened flag
 					this->mmu->Memory_mapped_IO[0xF] |= 0x1;
+					// set stat interrupt happened flag
+					this->mmu->Memory_mapped_IO[0xF] |= 0x2;
+
 				}
 			}
 		break;
@@ -205,25 +228,32 @@ public:
 		}
 	}
 
-	void renderscan_background()
-	{
-		// get vram sector selected in lcdc register
+	void renderscan_background() {
 		uint8_t* tileMap = (this->lcdc & 0x08) ? &this->mmu->Graphic_RAM[0x1C00] : &this->mmu->Graphic_RAM[0x1800];
 		uint8_t* tileData = (this->lcdc & 0x10) ? &this->mmu->Graphic_RAM[0x0000] : &this->mmu->Graphic_RAM[0x0800];
 
-		// calculate tile row
 		int y = (this->line + this->scy) & 0xFF;
 		int tileRow = (y / 8) * 32;
 
-		for (int x = 0; x < 160; x++) {
-			// select pixel using scx register
+		for (int x = 0; x < 160; x++)
+		{
 			int pixelX = (x + this->scx) & 0xFF;
 			int tileCol = pixelX / 8;
 			int tileIndex = tileMap[tileRow + tileCol];
-			uint8_t tileLine = (y % 8) * 2;
 
-			uint8_t low = tileData[tileIndex * 16 + tileLine];
-			uint8_t high = tileData[tileIndex * 16 + tileLine + 1];
+			uint8_t tileLine = (y % 8) * 2;
+			int byteIndex;
+			if (!(this->lcdc & 0x10))
+			{ // Signed indexing
+				byteIndex = ((int8_t)tileIndex) * 16 + tileLine;
+			}
+			else
+			{ // Unsigned indexing
+				byteIndex = tileIndex * 16 + tileLine;
+			}
+
+			uint8_t low = tileData[byteIndex];
+			uint8_t high = tileData[byteIndex + 1];
 
 			int colorBit = 7 - (pixelX % 8);
 			int color = ((high >> colorBit) & 1) << 1 | ((low >> colorBit) & 1);
@@ -232,6 +262,7 @@ public:
 			this->framebuffer[this->line * 160 + x] = this->color_palette[pixelColor];
 		}
 	}
+
 
 	void renderscan_window()
 	{

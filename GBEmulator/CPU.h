@@ -43,7 +43,10 @@ public:
 	// Renderer
 	Renderer renderer;
 
-	CPU();
+	// others
+	bool debugMode;
+
+	CPU(bool debugMode);
 
 	// Opcode table
 	static constexpr size_t OPCODE_COUNT = 256;
@@ -274,6 +277,10 @@ public:
 	void POP_r8r8(std::uint8_t* reg1, std::uint8_t* reg2);
 
 	/*
+		Pop register AF from the stack and sets .
+	*/
+
+	/*
 		Return from subroutine. This is basically a POP PC (if such an instruction existed).
 		See POP r16 for an explanation of how POP works.
 	*/
@@ -444,18 +451,6 @@ public:
 	*/
 	void RST(std::uint16_t vectorAddress);
 
-	/*** Bit shift instructions ***/
-
-	/*
-		Rotate register r8 left.
-	*/
-	void RLC_r8(std::uint8_t* reg);
-
-	/*
-		Rotate register C + r8 left.
-	*/
-	void RL_r8(std::uint8_t* reg);
-
 	/*** Miscellaneous Instructions ***/
 
 	/*
@@ -504,7 +499,17 @@ public:
 	*/
 	void STOP();
 
-	/***** Bit Shift Instructions *****/
+	/***** Bit Instructions *****/
+
+	/*
+		Rotate register A left and set carry flag.
+	*/
+	void RLCA();
+
+	/*
+		Rotate register A left, through the carry flag.
+	*/
+	void RLA();
 
 	/*
 		Rotate register A right and set carry flag.
@@ -517,14 +522,19 @@ public:
 	void RRA();
 
 	/*
+	Rotate register r8 left.
+*/
+	void RLC_r8(std::uint8_t* reg);
+
+	/*
+		Rotate register C + r8 left.
+	*/
+	void RL_r8(std::uint8_t* reg);
+
+	/*
 		Rotate register r8 right, through the carry flag.
 	*/
 	void RR_r8(uint8_t* reg);
-
-	/*
-		Rotate register left with carry flag.
-	*/
-	void RCL_r8(uint8_t* reg);
 
 	/*
 		Shift Right Logically register r8.
@@ -542,6 +552,11 @@ public:
 	void BIT_n_r8(uint8_t n, uint8_t* reg);
 
 	/*
+		Check bit n in byte at HL address
+	*/
+	void BIT_n_aHL(uint8_t n);
+
+	/*
 		Set bit n in reg register
 	*/
 	void SET_n_r8(uint8_t n, uint8_t* reg);
@@ -550,6 +565,11 @@ public:
 		Reset bit n in reg register
 	*/
 	void RES_n_r8(uint8_t n, uint8_t* reg);
+
+	/*
+		Reset bit n in byte at HL address
+	*/
+	void RES_n_aHL(uint8_t n);
 
 	/*
 		Swap the upper 4 bits in register r8 and the lower 4 ones.
