@@ -141,9 +141,8 @@ public:
 					this->mode = 2;
 					this->stat += 1;
 					this->line = 0;
-					// set v-blank happened flag
+					// set v-blank flag
 					this->mmu->Memory_mapped_IO[0xF] |= 0x1;
-					// set stat interrupt happened flag
 					this->mmu->Memory_mapped_IO[0xF] |= 0x2;
 
 				}
@@ -184,10 +183,12 @@ public:
 			uint8_t tileIndex = this->mmu->Graphics_sprite_information[oamIterator++];
 			uint8_t options = this->mmu->Graphics_sprite_information[oamIterator++];
 
+			uint8_t* tileData = &this->mmu->Graphic_RAM[0x0000];
+
 			// check if sprite is in this scanline
 			if (y <= this->line && y + 8 > this->line)
 			{
-				uint8_t palette = (options & 0x20 ? this->obp1 : this->obp0);
+				uint8_t palette = (options & 0x10 ? this->obp1 : this->obp0);
 				
 				for (int pix = 0; pix < 8; pix++)
 				{
@@ -197,9 +198,10 @@ public:
 						int pixelX = (options & 0x20) ? 7 - pix : pix;
 						// select line
 						int tileLine = (options & 0x40) ? 7 - (this->line - y) : this->line - y;
+						int byteIndex = tileIndex * 16 + tileLine * 2;
 
-						uint8_t low = this->mmu->Graphic_RAM[(tileIndex * 16) + tileLine * 2];
-						uint8_t high = this->mmu->Graphic_RAM[(tileIndex * 16) + tileLine * 2 + 1];
+						uint8_t low = tileData[byteIndex];
+						uint8_t high = tileData[byteIndex + 1];
 
 						// decode color value
 						int colorBit = 7 - (pixelX % 8);
@@ -219,7 +221,6 @@ public:
 						else
 						{
 							uint8_t pixelColor = (palette >> (color * 2)) & 0x03;
-							if (pixelColor == 3) continue;
 							this->framebuffer[buffer_index] = this->color_palette[pixelColor];
 						}
 					}
@@ -239,18 +240,10 @@ public:
 		{
 			int pixelX = (x + this->scx) & 0xFF;
 			int tileCol = pixelX / 8;
-			int tileIndex = tileMap[tileRow + tileCol];
+			int tileIndex = (this->lcdc & 0x10) ? tileMap[tileRow + tileCol] : int8_t(tileMap[tileRow + tileCol]) + 128;
 
 			uint8_t tileLine = (y % 8) * 2;
-			int byteIndex;
-			if (!(this->lcdc & 0x10))
-			{ // Signed indexing
-				byteIndex = ((int8_t)tileIndex) * 16 + tileLine;
-			}
-			else
-			{ // Unsigned indexing
-				byteIndex = tileIndex * 16 + tileLine;
-			}
+			int byteIndex = tileIndex * 16 + tileLine;
 
 			uint8_t low = tileData[byteIndex];
 			uint8_t high = tileData[byteIndex + 1];
@@ -281,14 +274,15 @@ public:
 
 		for (int x = 0; x < 160; x++)
 		{
-			// select pixel using scx register
-			int pixelX = (x + this->wy) & 0xFF;
+			int pixelX = (x + this->wx - 7) & 0xFF;
 			int tileCol = pixelX / 8;
-			int tileIndex = tileMap[tileRow + tileCol];
-			uint8_t tileLine = (y % 8) * 2;
+			int tileIndex = (this->lcdc & 0x10) ? tileMap[tileRow + tileCol] : int8_t(tileMap[tileRow + tileCol]) + 128;
 
-			uint8_t low = tileData[tileIndex * 16 + tileLine];
-			uint8_t high = tileData[tileIndex * 16 + tileLine + 1];
+			uint8_t tileLine = (y % 8) * 2;
+			int byteIndex = tileIndex * 16 + tileLine;
+
+			uint8_t low = tileData[byteIndex];
+			uint8_t high = tileData[byteIndex + 1];
 
 			int colorBit = 7 - (pixelX % 8);
 			int color = ((high >> colorBit) & 1) << 1 | ((low >> colorBit) & 1);

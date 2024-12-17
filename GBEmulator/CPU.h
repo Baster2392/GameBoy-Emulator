@@ -547,6 +547,11 @@ public:
 	void SLA_r8(uint8_t* reg);
 
 	/*
+		Shift Right Arithmetically register r8.
+	*/
+	void SRA_r8(uint8_t* reg);
+
+	/*
 		Check bit n in reg register
 	*/
 	void BIT_n_r8(uint8_t n, uint8_t* reg);

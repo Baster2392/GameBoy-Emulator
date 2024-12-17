@@ -18,8 +18,8 @@ atomic <bool> running(true);
 void load_ROM_procedure(CPU& cpu)
 {
 	FILE* file;
-	// fopen_s(&file, "ROMs/opus_tests/hello.gb", "rb");
-	fopen_s(&file, "ROMs/instruction_tests/07-jr,jp,call,ret,rst.gb", "rb");
+	fopen_s(&file, "ROMs/opus_tests/tictactoe.gb", "rb");
+	// fopen_s(&file, "ROMs/instruction_tests/07-jr,jp,call,ret,rst.gb", "rb");
 
 	if (!file)
 	{

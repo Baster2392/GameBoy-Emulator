@@ -261,12 +261,19 @@ void CPU::initializeOpcodeTable() {
 	opcodeTableBitOperations[0x1] = [this]() { RLC_r8(&(this->C)); };
 	opcodeTableBitOperations[0x2] = [this]() { RLC_r8(&(this->D)); };
 	opcodeTableBitOperations[0x7] = [this]() { RLC_r8(&(this->A)); };
+	opcodeTableBitOperations[0x10] = [this]() { RL_r8(&(this->B)); };
+	opcodeTableBitOperations[0x11] = [this]() { RL_r8(&(this->C)); };
 	opcodeTableBitOperations[0x12] = [this]() { RL_r8(&(this->D)); };
 	opcodeTableBitOperations[0x13] = [this]() { RL_r8(&(this->E)); };
+	opcodeTableBitOperations[0x14] = [this]() { RL_r8(&(this->H)); };
+	opcodeTableBitOperations[0x15] = [this]() { RL_r8(&(this->L)); };
 	opcodeTableBitOperations[0x18] = [this]() { RR_r8(&(this->B)); };
 	opcodeTableBitOperations[0x19] = [this]() { RR_r8(&(this->C)); };
+	opcodeTableBitOperations[0x21] = [this]() { SLA_r8(&(this->C)); };
 	opcodeTableBitOperations[0x23] = [this]() { SLA_r8(&(this->E)); };
 	opcodeTableBitOperations[0x27] = [this]() { SLA_r8(&(this->A)); };
+	opcodeTableBitOperations[0x28] = [this]() { SRA_r8(&(this->B)); };
+	opcodeTableBitOperations[0x29] = [this]() { SRA_r8(&(this->C)); };
 	opcodeTableBitOperations[0x1A] = [this]() { RR_r8(&(this->D)); };
 	opcodeTableBitOperations[0x1B] = [this]() { RR_r8(&(this->E)); };
 	opcodeTableBitOperations[0x33] = [this]() { SWAP_r8(&(this->E)); };
@@ -274,15 +281,29 @@ void CPU::initializeOpcodeTable() {
 	opcodeTableBitOperations[0x38] = [this]() { SRL_r8(&(this->B)); };
 	opcodeTableBitOperations[0x3F] = [this]() { SRL_r8(&(this->A)); };
 	opcodeTableBitOperations[0x40] = [this]() { BIT_n_r8(0, &(this->B)); };
+	opcodeTableBitOperations[0x41] = [this]() { BIT_n_r8(0, &(this->C)); };
 	opcodeTableBitOperations[0x42] = [this]() { BIT_n_r8(0, &(this->D)); };
+	opcodeTableBitOperations[0x43] = [this]() { BIT_n_r8(0, &(this->E)); };
+	opcodeTableBitOperations[0x44] = [this]() { BIT_n_r8(0, &(this->H)); };
+	opcodeTableBitOperations[0x45] = [this]() { BIT_n_r8(0, &(this->L)); };
 	opcodeTableBitOperations[0x47] = [this]() { BIT_n_r8(0, &(this->A)); };
+	opcodeTableBitOperations[0x48] = [this]() { BIT_n_r8(1, &(this->B)); };
+	opcodeTableBitOperations[0x49] = [this]() { BIT_n_r8(1, &(this->C)); };
 	opcodeTableBitOperations[0x4A] = [this]() { BIT_n_r8(1, &(this->D)); };
+	opcodeTableBitOperations[0x4B] = [this]() { BIT_n_r8(1, &(this->E)); };
 	opcodeTableBitOperations[0x4F] = [this]() { BIT_n_r8(1, &(this->A)); };
 	opcodeTableBitOperations[0x50] = [this]() { BIT_n_r8(2, &(this->B)); };
+	opcodeTableBitOperations[0x51] = [this]() { BIT_n_r8(2, &(this->C)); };
+	opcodeTableBitOperations[0x53] = [this]() { BIT_n_r8(2, &(this->E)); };
 	opcodeTableBitOperations[0x57] = [this]() { BIT_n_r8(2, &(this->A)); };
 	opcodeTableBitOperations[0x58] = [this]() { BIT_n_r8(3, &(this->B)); };
+	opcodeTableBitOperations[0x59] = [this]() { BIT_n_r8(3, &(this->C)); };
+	opcodeTableBitOperations[0x5B] = [this]() { BIT_n_r8(3, &(this->E)); };
+	opcodeTableBitOperations[0x5C] = [this]() { BIT_n_r8(3, &(this->H)); };
 	opcodeTableBitOperations[0x5F] = [this]() { BIT_n_r8(3, &(this->A)); };
 	opcodeTableBitOperations[0x60] = [this]() { BIT_n_r8(4, &(this->B)); };
+	opcodeTableBitOperations[0x61] = [this]() { BIT_n_r8(4, &(this->C)); };
+	opcodeTableBitOperations[0x64] = [this]() { BIT_n_r8(4, &(this->H)); };
 	opcodeTableBitOperations[0x67] = [this]() { BIT_n_r8(4, &(this->A)); };
 	opcodeTableBitOperations[0x68] = [this]() { BIT_n_r8(5, &(this->B)); };
 	opcodeTableBitOperations[0x6F] = [this]() { BIT_n_r8(5, &(this->A)); };
@@ -290,11 +311,17 @@ void CPU::initializeOpcodeTable() {
 	opcodeTableBitOperations[0x77] = [this]() { BIT_n_r8(6, &(this->A)); };
 	opcodeTableBitOperations[0x78] = [this]() { BIT_n_r8(7, &(this->B)); };
 	opcodeTableBitOperations[0x7A] = [this]() { BIT_n_r8(7, &(this->D)); };
+	opcodeTableBitOperations[0x7B] = [this]() { BIT_n_r8(7, &(this->E)); };
 	opcodeTableBitOperations[0x7E] = [this]() { BIT_n_aHL(7); };
 	opcodeTableBitOperations[0x7F] = [this]() { BIT_n_r8(7, &(this->A)); };
 	opcodeTableBitOperations[0x86] = [this]() { RES_n_aHL(0); };
 	opcodeTableBitOperations[0x87] = [this]() { RES_n_r8(0, &(this->A)); };
+	opcodeTableBitOperations[0xA4] = [this]() { RES_n_r8(4, &(this->H)); };
+	opcodeTableBitOperations[0xA8] = [this]() { RES_n_r8(5, &(this->B)); };
 	opcodeTableBitOperations[0xC1] = [this]() { SET_n_r8(0, &(this->C)); };
+	opcodeTableBitOperations[0xC9] = [this]() { SET_n_r8(1, &(this->C)); };
+	opcodeTableBitOperations[0xD1] = [this]() { SET_n_r8(2, &(this->C)); };
+	opcodeTableBitOperations[0xE9] = [this]() { SET_n_r8(5, &(this->C)); };
 }
 
 
@@ -447,10 +474,6 @@ void CPU::step()
 
 	uint8_t opcode = readInstruction(this->PC);
 	this->PC++;
-	// FILE* file;
-	// fopen_s(&file, "ROMs/opcodesttt2.txt", "a");
-	// fprintf(file, "%x\n", opcode);
-	// fclose(file);
 	if (this->debugMode) printf("%x: Executing opcode %x...\n", this->PC - 1, opcode);
 	executeOpcode(opcode);
 	gpu.step(this->cycles);
@@ -472,7 +495,7 @@ void CPU::step()
 			this->IME = 0;
 			RST(0x60);
 		}
-		else if (enabled & 0x02)
+		else if (enabled & 0x02)	// stat interrupt
 		{
 			mmu.write_memory(0xFF0F, interrupt_flags - 0x02);
 			this->IME = 0;
@@ -488,7 +511,7 @@ void CPU::step()
 
 	this->cycles = 0;
 	// using namespace std::chrono_literals;
-	std::this_thread::sleep_for(3ns);
+	std::this_thread::sleep_for(150ns);
 }
 
 bool CPU::Z_flag()
@@ -662,6 +685,20 @@ void CPU::SLA_r8(uint8_t* reg)
 	this->cycles += 8;
 }
 
+void CPU::SRA_r8(uint8_t* reg)
+{
+	bool cf = *reg & 0x1;
+	*reg >>= 1;
+
+	// set flags
+	setFlag('Z', *reg == 0);
+	setFlag('N', false);
+	setFlag('H', false);
+	setFlag('C', cf);
+
+	this->cycles += 8;
+}
+
 void CPU::BIT_n_r8(uint8_t n, uint8_t* reg)
 {
 	uint8_t bit = 1 << n;
@@ -812,10 +849,12 @@ void CPU::RST(std::uint16_t vectorAddress)
 void CPU::RLC_r8(std::uint8_t* reg)
 {
 	uint8_t value = *reg;
+
 	setFlag('Z', *reg == 0);
 	setFlag('N', false);
 	setFlag('H', false);
 	setFlag('C', value >= 0b10000000);
+
 	value <<= 1;
 	value += C_flag();
 	*reg = value;
@@ -854,10 +893,9 @@ void CPU::CPL()
 
 void CPU::DAA()
 {
-	uint8_t adjustment = 0; // Wartoœæ korekty
-	bool carry = false;     // Flaga przeniesienia
+	uint8_t adjustment = 0;
+	bool carry = false;
 
-	// Korekta dla dodawania
 	if (!N_flag()) {
 		if (H_flag() || (A & 0x0F) > 9) {
 			adjustment += 0x06;
@@ -867,7 +905,6 @@ void CPU::DAA()
 			carry = true;
 		}
 	}
-	// Korekta dla odejmowania
 	else {
 		if (H_flag()) {
 			adjustment -= 0x06;
@@ -877,14 +914,12 @@ void CPU::DAA()
 		}
 	}
 
-	// Zastosowanie korekty
 	A += adjustment;
 
-	// Ustawianie flag
-	setFlag('Z', A == 0);    // Z = 1, jeœli wynik to 0
-	setFlag('N', N_flag());  // Flaga N pozostaje bez zmian
-	setFlag('H', false);     // H zawsze resetowana
-	setFlag('C', carry);     // Ustawienie C, jeœli by³o przeniesienie
+	setFlag('Z', A == 0);
+	setFlag('N', N_flag());
+	setFlag('H', false);
+	setFlag('C', carry);
 
 	this->cycles += 4;
 }
