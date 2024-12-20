@@ -19,7 +19,7 @@ void load_ROM_procedure(CPU& cpu)
 {
 	FILE* file;
 	fopen_s(&file, "ROMs/opus_tests/tictactoe.gb", "rb");
-	// fopen_s(&file, "ROMs/instruction_tests/07-jr,jp,call,ret,rst.gb", "rb");
+	// fopen_s(&file, "ROMs/instruction_tests/cpu_bus_1.gb", "rb");
 
 	if (!file)
 	{

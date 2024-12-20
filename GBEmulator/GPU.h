@@ -155,7 +155,7 @@ public:
 
 	void render_scanline()
 	{
-		if (this->lcdc & 0x1)
+		if (this->lcdc & 0x01)
 		{
 			renderscan_background();
 		}
@@ -165,7 +165,7 @@ public:
 			renderscan_window();
 		}
 
-		if (this->lcdc & 0x2)
+		if (this->lcdc & 0x02)
 		{
 			renderscan_sprites();
 		}
@@ -173,20 +173,21 @@ public:
 
 	void renderscan_sprites()
 	{
+		uint8_t spriteHeight = (this->lcdc & 0x04) ? 16 : 8;
 		uint16_t oamIterator = 0;
 		// for each sprite
 		for (int i = 0; i < 40; i++)
 		{
 			// read sprite from memory
-			uint8_t y = this->mmu->Graphics_sprite_information[oamIterator++] - 8;
-			uint8_t x = this->mmu->Graphics_sprite_information[oamIterator++] - 16;
+			uint8_t y = this->mmu->Graphics_sprite_information[oamIterator++] - 16;
+			uint8_t x = this->mmu->Graphics_sprite_information[oamIterator++] - 8;
 			uint8_t tileIndex = this->mmu->Graphics_sprite_information[oamIterator++];
 			uint8_t options = this->mmu->Graphics_sprite_information[oamIterator++];
 
 			uint8_t* tileData = &this->mmu->Graphic_RAM[0x0000];
 
 			// check if sprite is in this scanline
-			if (y <= this->line && y + 8 > this->line)
+			if (y <= this->line && y + spriteHeight > this->line)
 			{
 				uint8_t palette = (options & 0x10 ? this->obp1 : this->obp0);
 				
@@ -197,8 +198,16 @@ public:
 						// select pixel
 						int pixelX = (options & 0x20) ? 7 - pix : pix;
 						// select line
-						int tileLine = (options & 0x40) ? 7 - (this->line - y) : this->line - y;
-						int byteIndex = tileIndex * 16 + tileLine * 2;
+						int tileLine = (options & 0x40) ? spriteHeight - 1 - (this->line - y) : (this->line - y);
+
+						int adjustedTileIndex = tileIndex;
+
+						if (spriteHeight == 16 && tileLine >= 8) {
+							adjustedTileIndex++;
+							tileLine -= 8;
+						}
+
+						int byteIndex = adjustedTileIndex * 16 + tileLine * 2;
 
 						uint8_t low = tileData[byteIndex];
 						uint8_t high = tileData[byteIndex + 1];

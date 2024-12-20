@@ -567,6 +567,11 @@ public:
 	void SET_n_r8(uint8_t n, uint8_t* reg);
 
 	/*
+		Set bit n in byte pinted by HL
+	*/
+	void SET_n_aHL(uint8_t n);
+
+	/*
 		Reset bit n in reg register
 	*/
 	void RES_n_r8(uint8_t n, uint8_t* reg);

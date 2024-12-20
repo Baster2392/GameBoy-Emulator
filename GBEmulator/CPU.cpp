@@ -258,8 +258,12 @@ void CPU::initializeOpcodeTable() {
 	opcodeTable[0xEF] = [this]() { RST(0x28); };
 	opcodeTable[0xFF] = [this]() { RST(0x38); };
 
+	opcodeTableBitOperations[0x0] = [this]() { RLC_r8(&(this->B)); };
 	opcodeTableBitOperations[0x1] = [this]() { RLC_r8(&(this->C)); };
 	opcodeTableBitOperations[0x2] = [this]() { RLC_r8(&(this->D)); };
+	opcodeTableBitOperations[0x3] = [this]() { RLC_r8(&(this->E)); };
+	opcodeTableBitOperations[0x4] = [this]() { RLC_r8(&(this->H)); };
+	opcodeTableBitOperations[0x5] = [this]() { RLC_r8(&(this->L)); };
 	opcodeTableBitOperations[0x7] = [this]() { RLC_r8(&(this->A)); };
 	opcodeTableBitOperations[0x10] = [this]() { RL_r8(&(this->B)); };
 	opcodeTableBitOperations[0x11] = [this]() { RL_r8(&(this->C)); };
@@ -267,18 +271,41 @@ void CPU::initializeOpcodeTable() {
 	opcodeTableBitOperations[0x13] = [this]() { RL_r8(&(this->E)); };
 	opcodeTableBitOperations[0x14] = [this]() { RL_r8(&(this->H)); };
 	opcodeTableBitOperations[0x15] = [this]() { RL_r8(&(this->L)); };
+	opcodeTableBitOperations[0x17] = [this]() { RL_r8(&(this->A)); };
 	opcodeTableBitOperations[0x18] = [this]() { RR_r8(&(this->B)); };
 	opcodeTableBitOperations[0x19] = [this]() { RR_r8(&(this->C)); };
+	opcodeTableBitOperations[0x1A] = [this]() { RR_r8(&(this->D)); };
+	opcodeTableBitOperations[0x1B] = [this]() { RR_r8(&(this->E)); };
+	opcodeTableBitOperations[0x1C] = [this]() { RR_r8(&(this->H)); };
+	opcodeTableBitOperations[0x1D] = [this]() { RR_r8(&(this->L)); };
+	opcodeTableBitOperations[0x1F] = [this]() { RR_r8(&(this->A)); };
+	opcodeTableBitOperations[0x20] = [this]() { SLA_r8(&(this->B)); };
 	opcodeTableBitOperations[0x21] = [this]() { SLA_r8(&(this->C)); };
+	opcodeTableBitOperations[0x22] = [this]() { SLA_r8(&(this->D)); };
 	opcodeTableBitOperations[0x23] = [this]() { SLA_r8(&(this->E)); };
+	opcodeTableBitOperations[0x24] = [this]() { SLA_r8(&(this->H)); };
+	opcodeTableBitOperations[0x25] = [this]() { SLA_r8(&(this->L)); };
 	opcodeTableBitOperations[0x27] = [this]() { SLA_r8(&(this->A)); };
 	opcodeTableBitOperations[0x28] = [this]() { SRA_r8(&(this->B)); };
 	opcodeTableBitOperations[0x29] = [this]() { SRA_r8(&(this->C)); };
-	opcodeTableBitOperations[0x1A] = [this]() { RR_r8(&(this->D)); };
-	opcodeTableBitOperations[0x1B] = [this]() { RR_r8(&(this->E)); };
+	opcodeTableBitOperations[0x2A] = [this]() { SRA_r8(&(this->D)); };
+	opcodeTableBitOperations[0x2B] = [this]() { SRA_r8(&(this->E)); };
+	opcodeTableBitOperations[0x2C] = [this]() { SRA_r8(&(this->H)); };
+	opcodeTableBitOperations[0x2D] = [this]() { SRA_r8(&(this->L)); };
+	opcodeTableBitOperations[0x2F] = [this]() { SRA_r8(&(this->A)); };
+	opcodeTableBitOperations[0x30] = [this]() { SWAP_r8(&(this->B)); };
+	opcodeTableBitOperations[0x31] = [this]() { SWAP_r8(&(this->C)); };
+	opcodeTableBitOperations[0x32] = [this]() { SWAP_r8(&(this->D)); };
 	opcodeTableBitOperations[0x33] = [this]() { SWAP_r8(&(this->E)); };
+	opcodeTableBitOperations[0x34] = [this]() { SWAP_r8(&(this->H)); };
+	opcodeTableBitOperations[0x35] = [this]() { SWAP_r8(&(this->L)); };
 	opcodeTableBitOperations[0x37] = [this]() { SWAP_r8(&(this->A)); };
 	opcodeTableBitOperations[0x38] = [this]() { SRL_r8(&(this->B)); };
+	opcodeTableBitOperations[0x39] = [this]() { SRL_r8(&(this->C)); };
+	opcodeTableBitOperations[0x3A] = [this]() { SRL_r8(&(this->D)); };
+	opcodeTableBitOperations[0x3B] = [this]() { SRL_r8(&(this->E)); };
+	opcodeTableBitOperations[0x3C] = [this]() { SRL_r8(&(this->H)); };
+	opcodeTableBitOperations[0x3D] = [this]() { SRL_r8(&(this->L)); };
 	opcodeTableBitOperations[0x3F] = [this]() { SRL_r8(&(this->A)); };
 	opcodeTableBitOperations[0x40] = [this]() { BIT_n_r8(0, &(this->B)); };
 	opcodeTableBitOperations[0x41] = [this]() { BIT_n_r8(0, &(this->C)); };
@@ -291,37 +318,191 @@ void CPU::initializeOpcodeTable() {
 	opcodeTableBitOperations[0x49] = [this]() { BIT_n_r8(1, &(this->C)); };
 	opcodeTableBitOperations[0x4A] = [this]() { BIT_n_r8(1, &(this->D)); };
 	opcodeTableBitOperations[0x4B] = [this]() { BIT_n_r8(1, &(this->E)); };
+	opcodeTableBitOperations[0x4C] = [this]() { BIT_n_r8(1, &(this->H)); };
+	opcodeTableBitOperations[0x4D] = [this]() { BIT_n_r8(1, &(this->L)); };
 	opcodeTableBitOperations[0x4F] = [this]() { BIT_n_r8(1, &(this->A)); };
 	opcodeTableBitOperations[0x50] = [this]() { BIT_n_r8(2, &(this->B)); };
 	opcodeTableBitOperations[0x51] = [this]() { BIT_n_r8(2, &(this->C)); };
+	opcodeTableBitOperations[0x52] = [this]() { BIT_n_r8(2, &(this->D)); };
 	opcodeTableBitOperations[0x53] = [this]() { BIT_n_r8(2, &(this->E)); };
+	opcodeTableBitOperations[0x54] = [this]() { BIT_n_r8(2, &(this->H)); };
+	opcodeTableBitOperations[0x55] = [this]() { BIT_n_r8(2, &(this->L)); };
 	opcodeTableBitOperations[0x57] = [this]() { BIT_n_r8(2, &(this->A)); };
 	opcodeTableBitOperations[0x58] = [this]() { BIT_n_r8(3, &(this->B)); };
 	opcodeTableBitOperations[0x59] = [this]() { BIT_n_r8(3, &(this->C)); };
+	opcodeTableBitOperations[0x5A] = [this]() { BIT_n_r8(3, &(this->D)); };
 	opcodeTableBitOperations[0x5B] = [this]() { BIT_n_r8(3, &(this->E)); };
 	opcodeTableBitOperations[0x5C] = [this]() { BIT_n_r8(3, &(this->H)); };
+	opcodeTableBitOperations[0x5D] = [this]() { BIT_n_r8(3, &(this->L)); };
 	opcodeTableBitOperations[0x5F] = [this]() { BIT_n_r8(3, &(this->A)); };
 	opcodeTableBitOperations[0x60] = [this]() { BIT_n_r8(4, &(this->B)); };
 	opcodeTableBitOperations[0x61] = [this]() { BIT_n_r8(4, &(this->C)); };
+	opcodeTableBitOperations[0x62] = [this]() { BIT_n_r8(4, &(this->D)); };
+	opcodeTableBitOperations[0x63] = [this]() { BIT_n_r8(4, &(this->E)); };
 	opcodeTableBitOperations[0x64] = [this]() { BIT_n_r8(4, &(this->H)); };
+	opcodeTableBitOperations[0x65] = [this]() { BIT_n_r8(4, &(this->L)); };
 	opcodeTableBitOperations[0x67] = [this]() { BIT_n_r8(4, &(this->A)); };
 	opcodeTableBitOperations[0x68] = [this]() { BIT_n_r8(5, &(this->B)); };
+	opcodeTableBitOperations[0x69] = [this]() { BIT_n_r8(5, &(this->C)); };
+	opcodeTableBitOperations[0x6A] = [this]() { BIT_n_r8(5, &(this->D)); };
+	opcodeTableBitOperations[0x6B] = [this]() { BIT_n_r8(5, &(this->E)); };
+	opcodeTableBitOperations[0x6C] = [this]() { BIT_n_r8(5, &(this->H)); };
+	opcodeTableBitOperations[0x6D] = [this]() { BIT_n_r8(5, &(this->L)); };
 	opcodeTableBitOperations[0x6F] = [this]() { BIT_n_r8(5, &(this->A)); };
 	opcodeTableBitOperations[0x70] = [this]() { BIT_n_r8(6, &(this->B)); };
+	opcodeTableBitOperations[0x71] = [this]() { BIT_n_r8(6, &(this->C)); };
+	opcodeTableBitOperations[0x72] = [this]() { BIT_n_r8(6, &(this->D)); };
+	opcodeTableBitOperations[0x73] = [this]() { BIT_n_r8(6, &(this->E)); };
+	opcodeTableBitOperations[0x74] = [this]() { BIT_n_r8(6, &(this->H)); };
+	opcodeTableBitOperations[0x75] = [this]() { BIT_n_r8(6, &(this->L)); };
 	opcodeTableBitOperations[0x77] = [this]() { BIT_n_r8(6, &(this->A)); };
 	opcodeTableBitOperations[0x78] = [this]() { BIT_n_r8(7, &(this->B)); };
+	opcodeTableBitOperations[0x79] = [this]() { BIT_n_r8(7, &(this->C)); };
 	opcodeTableBitOperations[0x7A] = [this]() { BIT_n_r8(7, &(this->D)); };
 	opcodeTableBitOperations[0x7B] = [this]() { BIT_n_r8(7, &(this->E)); };
-	opcodeTableBitOperations[0x7E] = [this]() { BIT_n_aHL(7); };
+	opcodeTableBitOperations[0x7C] = [this]() { BIT_n_r8(7, &(this->H)); };
+	opcodeTableBitOperations[0x7D] = [this]() { BIT_n_r8(7, &(this->L)); };
 	opcodeTableBitOperations[0x7F] = [this]() { BIT_n_r8(7, &(this->A)); };
+	opcodeTableBitOperations[0x80] = [this]() { RES_n_r8(0, &(this->B)); };
+	opcodeTableBitOperations[0x81] = [this]() { RES_n_r8(0, &(this->C)); };
+	opcodeTableBitOperations[0x82] = [this]() { RES_n_r8(0, &(this->D)); };
+	opcodeTableBitOperations[0x83] = [this]() { RES_n_r8(0, &(this->E)); };
+	opcodeTableBitOperations[0x84] = [this]() { RES_n_r8(0, &(this->H)); };
+	opcodeTableBitOperations[0x85] = [this]() { RES_n_r8(0, &(this->L)); };
 	opcodeTableBitOperations[0x86] = [this]() { RES_n_aHL(0); };
 	opcodeTableBitOperations[0x87] = [this]() { RES_n_r8(0, &(this->A)); };
+	opcodeTableBitOperations[0x88] = [this]() { RES_n_r8(1, &(this->B)); };
+	opcodeTableBitOperations[0x89] = [this]() { RES_n_r8(1, &(this->C)); };
+	opcodeTableBitOperations[0x8A] = [this]() { RES_n_r8(1, &(this->D)); };
+	opcodeTableBitOperations[0x8B] = [this]() { RES_n_r8(1, &(this->E)); };
+	opcodeTableBitOperations[0x8C] = [this]() { RES_n_r8(1, &(this->H)); };
+	opcodeTableBitOperations[0x8D] = [this]() { RES_n_r8(1, &(this->L)); };
+	opcodeTableBitOperations[0x8E] = [this]() { RES_n_aHL(1); };
+	opcodeTableBitOperations[0x8F] = [this]() { RES_n_r8(1, &(this->A)); };
+	opcodeTableBitOperations[0x90] = [this]() { RES_n_r8(2, &(this->B)); };
+	opcodeTableBitOperations[0x91] = [this]() { RES_n_r8(2, &(this->C)); };
+	opcodeTableBitOperations[0x92] = [this]() { RES_n_r8(2, &(this->D)); };
+	opcodeTableBitOperations[0x93] = [this]() { RES_n_r8(2, &(this->E)); };
+	opcodeTableBitOperations[0x94] = [this]() { RES_n_r8(2, &(this->H)); };
+	opcodeTableBitOperations[0x95] = [this]() { RES_n_r8(2, &(this->L)); };
+	opcodeTableBitOperations[0x96] = [this]() { RES_n_aHL(2); };
+	opcodeTableBitOperations[0x97] = [this]() { RES_n_r8(2, &(this->A)); };
+	opcodeTableBitOperations[0x98] = [this]() { RES_n_r8(3, &(this->B)); };
+	opcodeTableBitOperations[0x99] = [this]() { RES_n_r8(3, &(this->C)); };
+	opcodeTableBitOperations[0x9A] = [this]() { RES_n_r8(3, &(this->D)); };
+	opcodeTableBitOperations[0x9B] = [this]() { RES_n_r8(3, &(this->E)); };
+	opcodeTableBitOperations[0x9C] = [this]() { RES_n_r8(3, &(this->H)); };
+	opcodeTableBitOperations[0x9D] = [this]() { RES_n_r8(3, &(this->L)); };
+	opcodeTableBitOperations[0x9E] = [this]() { RES_n_aHL(3); };
+	opcodeTableBitOperations[0x9F] = [this]() { RES_n_r8(3, &(this->A)); };
+	opcodeTableBitOperations[0xA0] = [this]() { RES_n_r8(4, &(this->B)); };
+	opcodeTableBitOperations[0xA1] = [this]() { RES_n_r8(4, &(this->C)); };
+	opcodeTableBitOperations[0xA2] = [this]() { RES_n_r8(4, &(this->D)); };
+	opcodeTableBitOperations[0xA3] = [this]() { RES_n_r8(4, &(this->E)); };
 	opcodeTableBitOperations[0xA4] = [this]() { RES_n_r8(4, &(this->H)); };
+	opcodeTableBitOperations[0xA5] = [this]() { RES_n_r8(4, &(this->L)); };
+	opcodeTableBitOperations[0xA6] = [this]() { RES_n_aHL(4); };
+	opcodeTableBitOperations[0xA7] = [this]() { RES_n_r8(4, &(this->A)); };
 	opcodeTableBitOperations[0xA8] = [this]() { RES_n_r8(5, &(this->B)); };
+	opcodeTableBitOperations[0xA9] = [this]() { RES_n_r8(5, &(this->C)); };
+	opcodeTableBitOperations[0xAA] = [this]() { RES_n_r8(5, &(this->D)); };
+	opcodeTableBitOperations[0xAB] = [this]() { RES_n_r8(5, &(this->E)); };
+	opcodeTableBitOperations[0xAC] = [this]() { RES_n_r8(5, &(this->H)); };
+	opcodeTableBitOperations[0xAD] = [this]() { RES_n_r8(5, &(this->L)); };
+	opcodeTableBitOperations[0xAE] = [this]() { RES_n_aHL(5); };
+	opcodeTableBitOperations[0xAF] = [this]() { RES_n_r8(5, &(this->A)); };
+	opcodeTableBitOperations[0xB0] = [this]() { RES_n_r8(6, &(this->B)); };
+	opcodeTableBitOperations[0xB1] = [this]() { RES_n_r8(6, &(this->C)); };
+	opcodeTableBitOperations[0xB2] = [this]() { RES_n_r8(6, &(this->D)); };
+	opcodeTableBitOperations[0xB3] = [this]() { RES_n_r8(6, &(this->E)); };
+	opcodeTableBitOperations[0xB4] = [this]() { RES_n_r8(6, &(this->H)); };
+	opcodeTableBitOperations[0xB5] = [this]() { RES_n_r8(6, &(this->L)); };
+	opcodeTableBitOperations[0xB6] = [this]() { RES_n_aHL(6); };
+	opcodeTableBitOperations[0xB7] = [this]() { RES_n_r8(6, &(this->A)); };
+	opcodeTableBitOperations[0xB8] = [this]() { RES_n_r8(7, &(this->B)); };
+	opcodeTableBitOperations[0xB9] = [this]() { RES_n_r8(7, &(this->C)); };
+	opcodeTableBitOperations[0xBA] = [this]() { RES_n_r8(7, &(this->D)); };
+	opcodeTableBitOperations[0xBB] = [this]() { RES_n_r8(7, &(this->E)); };
+	opcodeTableBitOperations[0xBC] = [this]() { RES_n_r8(7, &(this->H)); };
+	opcodeTableBitOperations[0xBD] = [this]() { RES_n_r8(7, &(this->L)); };
+	opcodeTableBitOperations[0xBE] = [this]() { RES_n_aHL(7); };
+	opcodeTableBitOperations[0xBF] = [this]() { RES_n_r8(7, &(this->A)); };
+	opcodeTableBitOperations[0xC0] = [this]() { SET_n_r8(0, &(this->B)); };
 	opcodeTableBitOperations[0xC1] = [this]() { SET_n_r8(0, &(this->C)); };
+	opcodeTableBitOperations[0xC2] = [this]() { SET_n_r8(0, &(this->D)); };
+	opcodeTableBitOperations[0xC3] = [this]() { SET_n_r8(0, &(this->E)); };
+	opcodeTableBitOperations[0xC4] = [this]() { SET_n_r8(0, &(this->H)); };
+	opcodeTableBitOperations[0xC5] = [this]() { SET_n_r8(0, &(this->L)); };
+	opcodeTableBitOperations[0xC7] = [this]() { SET_n_r8(0, &(this->A)); };
+	opcodeTableBitOperations[0xC8] = [this]() { SET_n_r8(1, &(this->B)); };
 	opcodeTableBitOperations[0xC9] = [this]() { SET_n_r8(1, &(this->C)); };
+	opcodeTableBitOperations[0xCA] = [this]() { SET_n_r8(1, &(this->D)); };
+	opcodeTableBitOperations[0xCB] = [this]() { SET_n_r8(1, &(this->E)); };
+	opcodeTableBitOperations[0xCC] = [this]() { SET_n_r8(1, &(this->H)); };
+	opcodeTableBitOperations[0xCD] = [this]() { SET_n_r8(1, &(this->L)); };
+	opcodeTableBitOperations[0xCF] = [this]() { SET_n_r8(1, &(this->A)); };
+	opcodeTableBitOperations[0xD0] = [this]() { SET_n_r8(2, &(this->B)); };
 	opcodeTableBitOperations[0xD1] = [this]() { SET_n_r8(2, &(this->C)); };
+	opcodeTableBitOperations[0xD2] = [this]() { SET_n_r8(2, &(this->D)); };
+	opcodeTableBitOperations[0xD3] = [this]() { SET_n_r8(2, &(this->E)); };
+	opcodeTableBitOperations[0xD4] = [this]() { SET_n_r8(2, &(this->H)); };
+	opcodeTableBitOperations[0xD5] = [this]() { SET_n_r8(2, &(this->L)); };
+	opcodeTableBitOperations[0xD7] = [this]() { SET_n_r8(2, &(this->A)); };
+	opcodeTableBitOperations[0xD8] = [this]() { SET_n_r8(3, &(this->B)); };
+	opcodeTableBitOperations[0xD9] = [this]() { SET_n_r8(3, &(this->C)); };
+	opcodeTableBitOperations[0xDA] = [this]() { SET_n_r8(3, &(this->D)); };
+	opcodeTableBitOperations[0xDB] = [this]() { SET_n_r8(3, &(this->E)); };
+	opcodeTableBitOperations[0xDC] = [this]() { SET_n_r8(3, &(this->H)); };
+	opcodeTableBitOperations[0xDD] = [this]() { SET_n_r8(3, &(this->L)); };
+	opcodeTableBitOperations[0xDF] = [this]() { SET_n_r8(3, &(this->A)); };
+	opcodeTableBitOperations[0xE0] = [this]() { SET_n_r8(4, &(this->B)); };
+	opcodeTableBitOperations[0xE1] = [this]() { SET_n_r8(4, &(this->C)); };
+	opcodeTableBitOperations[0xE2] = [this]() { SET_n_r8(4, &(this->D)); };
+	opcodeTableBitOperations[0xE3] = [this]() { SET_n_r8(4, &(this->E)); };
+	opcodeTableBitOperations[0xE4] = [this]() { SET_n_r8(4, &(this->H)); };
+	opcodeTableBitOperations[0xE5] = [this]() { SET_n_r8(4, &(this->L)); };
+	opcodeTableBitOperations[0xE7] = [this]() { SET_n_r8(4, &(this->A)); };
+	opcodeTableBitOperations[0xE8] = [this]() { SET_n_r8(5, &(this->B)); };
 	opcodeTableBitOperations[0xE9] = [this]() { SET_n_r8(5, &(this->C)); };
+	opcodeTableBitOperations[0xEA] = [this]() { SET_n_r8(5, &(this->D)); };
+	opcodeTableBitOperations[0xEB] = [this]() { SET_n_r8(5, &(this->E)); };
+	opcodeTableBitOperations[0xEC] = [this]() { SET_n_r8(5, &(this->H)); };
+	opcodeTableBitOperations[0xED] = [this]() { SET_n_r8(5, &(this->L)); };
+	opcodeTableBitOperations[0xEF] = [this]() { SET_n_r8(5, &(this->A)); };
+	opcodeTableBitOperations[0xF0] = [this]() { SET_n_r8(6, &(this->B)); };
+	opcodeTableBitOperations[0xF1] = [this]() { SET_n_r8(6, &(this->C)); };
+	opcodeTableBitOperations[0xF2] = [this]() { SET_n_r8(6, &(this->D)); };
+	opcodeTableBitOperations[0xF3] = [this]() { SET_n_r8(6, &(this->E)); };
+	opcodeTableBitOperations[0xF4] = [this]() { SET_n_r8(6, &(this->H)); };
+	opcodeTableBitOperations[0xF5] = [this]() { SET_n_r8(6, &(this->L)); };
+	opcodeTableBitOperations[0xF7] = [this]() { SET_n_r8(6, &(this->A)); };
+	opcodeTableBitOperations[0xF8] = [this]() { SET_n_r8(7, &(this->B)); };
+	opcodeTableBitOperations[0xF9] = [this]() { SET_n_r8(7, &(this->C)); };
+	opcodeTableBitOperations[0xFA] = [this]() { SET_n_r8(7, &(this->D)); };
+	opcodeTableBitOperations[0xFB] = [this]() { SET_n_r8(7, &(this->E)); };
+	opcodeTableBitOperations[0xFC] = [this]() { SET_n_r8(7, &(this->H)); };
+	opcodeTableBitOperations[0xFD] = [this]() { SET_n_r8(7, &(this->L)); };
+	opcodeTableBitOperations[0xFF] = [this]() { SET_n_r8(7, &(this->A)); };
+
+	opcodeTableBitOperations[0x46] = [this]() { BIT_n_aHL(0); };
+	opcodeTableBitOperations[0x56] = [this]() { BIT_n_aHL(2); };
+	opcodeTableBitOperations[0x66] = [this]() { BIT_n_aHL(4); };
+	opcodeTableBitOperations[0x76] = [this]() { BIT_n_aHL(6); };
+	opcodeTableBitOperations[0x4E] = [this]() { BIT_n_aHL(1); };
+	opcodeTableBitOperations[0x5E] = [this]() { BIT_n_aHL(3); };
+	opcodeTableBitOperations[0x6E] = [this]() { BIT_n_aHL(5); };
+	opcodeTableBitOperations[0x7E] = [this]() { BIT_n_aHL(7); };
+
+	opcodeTableBitOperations[0xC6] = [this]() { SET_n_aHL(0); };
+	opcodeTableBitOperations[0xD6] = [this]() { SET_n_aHL(2); };
+	opcodeTableBitOperations[0xE6] = [this]() { SET_n_aHL(4); };
+	opcodeTableBitOperations[0xF6] = [this]() { SET_n_aHL(6); };
+	opcodeTableBitOperations[0xCE] = [this]() { SET_n_aHL(1); };
+	opcodeTableBitOperations[0xDE] = [this]() { SET_n_aHL(3); };
+	opcodeTableBitOperations[0xEE] = [this]() { SET_n_aHL(5); };
+	opcodeTableBitOperations[0xFE] = [this]() { SET_n_aHL(7); };
+
+
 }
 
 
@@ -511,7 +692,7 @@ void CPU::step()
 
 	this->cycles = 0;
 	// using namespace std::chrono_literals;
-	std::this_thread::sleep_for(150ns);
+	// std::this_thread::sleep_for(150ns);
 }
 
 bool CPU::Z_flag()
@@ -734,6 +915,16 @@ void CPU::SET_n_r8(uint8_t n, uint8_t* reg)
 	this->cycles += 8;
 }
 
+void CPU::SET_n_aHL(uint8_t n)
+{
+	uint8_t bit = 1 << n;
+	uint16_t address = (this->H << 8) + this->L;
+	uint8_t value = readMemory(address);
+	value |= bit;
+	writeMemory(address, value);
+	this->cycles += 16;
+}
+
 void CPU::RES_n_r8(uint8_t n, uint8_t* reg)
 {
 	uint8_t bit = 0b11111111 ^ (1 << n);
@@ -891,12 +1082,11 @@ void CPU::CPL()
 	setFlag('H', true);
 }
 
-void CPU::DAA()
-{
+void CPU::DAA() {
 	uint8_t adjustment = 0;
 	bool carry = false;
 
-	if (!N_flag()) {
+	if (!N_flag()) { // Addition
 		if (H_flag() || (A & 0x0F) > 9) {
 			adjustment += 0x06;
 		}
@@ -905,7 +1095,7 @@ void CPU::DAA()
 			carry = true;
 		}
 	}
-	else {
+	else { // Subtraction
 		if (H_flag()) {
 			adjustment -= 0x06;
 		}
@@ -917,11 +1107,8 @@ void CPU::DAA()
 	A += adjustment;
 
 	setFlag('Z', A == 0);
-	setFlag('N', N_flag());
-	setFlag('H', false);
-	setFlag('C', carry);
-
-	this->cycles += 4;
+	setFlag('H', false); // H is always cleared
+	setFlag('C', carry || C_flag());
 }
 
 
