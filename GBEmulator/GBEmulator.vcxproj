@@ -137,8 +137,6 @@
   <ItemGroup>
     <ClCompile Include="GBEmulator.cpp" />
     <ClCompile Include="CPU.cpp" />
-    <ClCompile Include="GPU.cpp" />
-    <ClCompile Include="MMU.cpp" />
     <ClCompile Include="Renderer.cpp" />
   </ItemGroup>
   <ItemGroup>

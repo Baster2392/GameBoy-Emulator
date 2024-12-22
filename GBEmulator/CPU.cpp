@@ -648,11 +648,6 @@ void CPU::setFlag(char flag, bool value)
 
 void CPU::step()
 {
-	if (this->gpu.line == 145)
-	{
-		printf("");
-	}
-
 	uint8_t opcode = readInstruction(this->PC);
 	this->PC++;
 	if (this->debugMode) printf("%x: Executing opcode %x...\n", this->PC - 1, opcode);
@@ -670,9 +665,9 @@ void CPU::step()
 			mmu.write_memory(0xFF0F, interrupt_flags - 0x01);
 			this->IME = 0;
 			RST(0x40);
-		} else if (interrupt_enable_flags & 0x10 && this->keyboardHandler->interrupt_happened)	// high-to-low key interrupt
+		} else if (interrupt_enable_flags & 0x10 && this->keyboardHandler.interrupt_happened)	// high-to-low key interrupt
 		{
-			this->keyboardHandler->interrupt_happened = false;
+			this->keyboardHandler.interrupt_happened = false;
 			this->IME = 0;
 			RST(0x60);
 		}
@@ -691,8 +686,8 @@ void CPU::step()
 	}
 
 	this->cycles = 0;
-	// using namespace std::chrono_literals;
-	// std::this_thread::sleep_for(150ns);
+	using namespace std::chrono_literals;
+	std::this_thread::sleep_for(125ns);
 }
 
 bool CPU::Z_flag()

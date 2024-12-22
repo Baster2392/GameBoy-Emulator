@@ -18,7 +18,7 @@ atomic <bool> running(true);
 void load_ROM_procedure(CPU& cpu)
 {
 	FILE* file;
-	fopen_s(&file, "ROMs/opus_tests/tictactoe.gb", "rb");
+	fopen_s(&file, "ROMs/opus_tests/breakout.gb", "rb");
 	// fopen_s(&file, "ROMs/instruction_tests/cpu_bus_1.gb", "rb");
 
 	if (!file)
@@ -54,7 +54,7 @@ void cpu_loop(CPU& cpu)
 int main()
 {
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-		std::cerr << "Nie udało się zainicjować SDL: " << SDL_GetError() << std::endl;
+		std::cerr << "SLD initialization failed: " << SDL_GetError() << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
@@ -63,7 +63,7 @@ int main()
 	cpu.PC = 0x100;
 
 	std::thread cpuThread(cpu_loop, std::ref(cpu));	// cpu thread
-	cpu.keyboardHandler->handleInput(&running);	// input thread
+	cpu.keyboardHandler.handleInput(&running);	// input thread
 	
 	cpuThread.join();
 	SDL_Quit();

@@ -12,14 +12,14 @@ Renderer::Renderer() {
     );
 
     if (!window) {
-        std::cerr << "Nie uda³o siê stworzyæ okna: " << SDL_GetError() << std::endl;
+        std::cerr << "Cannot create window: " << SDL_GetError() << std::endl;
         SDL_Quit();
         exit(EXIT_FAILURE);
     }
 
     sdl_renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (!sdl_renderer) {
-        std::cerr << "Nie uda³o siê stworzyæ renderera: " << SDL_GetError() << std::endl;
+        std::cerr << "Cannot create renderer: " << SDL_GetError() << std::endl;
         SDL_DestroyWindow(window);
         SDL_Quit();
         exit(EXIT_FAILURE);
@@ -34,7 +34,7 @@ Renderer::Renderer() {
     );
 
     if (!texture) {
-        std::cerr << "Nie uda³o siê stworzyæ tekstury: " << SDL_GetError() << std::endl;
+        std::cerr << "Cannot create texture: " << SDL_GetError() << std::endl;
         SDL_DestroyRenderer(sdl_renderer);
         SDL_DestroyWindow(window);
         SDL_Quit();

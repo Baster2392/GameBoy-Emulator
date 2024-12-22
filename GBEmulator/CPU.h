@@ -35,9 +35,9 @@ public:
 	int cycles;
 
 	// Keyboard handler
-	shared_ptr<KeyboardHandler> keyboardHandler = make_shared<KeyboardHandler>();
+	KeyboardHandler keyboardHandler;
 	// Memory Management Unit
-	MMU mmu = MMU(keyboardHandler);
+	MMU mmu = MMU(&keyboardHandler);
 	// Graphic Processing Unit
 	GPU gpu = GPU(&mmu);
 	// Renderer

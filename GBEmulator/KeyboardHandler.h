@@ -8,11 +8,11 @@ using namespace std;
 
 class KeyboardHandler
 {
-	uint8_t rows_values[2] = { 0x0F, 0x0F };
-    uint8_t column_value = 0;
+	atomic<uint8_t> rows_values[2] = { 0x0F, 0x0F };
+    atomic<uint8_t> column_value = 0;
 
 public:
-    bool interrupt_happened = false;
+    atomic<bool> interrupt_happened = false;
 
     void write_value(uint8_t value)
     {
