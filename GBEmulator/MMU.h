@@ -3,7 +3,6 @@
 #include <cstdint>
 #include <stdio.h>
 #include <memory>
-#include <mutex>
 #include "KeyboardHandler.h"
 
 class MMU
@@ -98,16 +97,6 @@ public:
         }
         else if (address >= 0xFF80 && address <= 0xFFFF) {  // [FF80-FFFF] Zero-page RAM
             Zero_page_RAM[address - 0xFF80] = value;
-        }
-    }
-
-    void print_memory(uint16_t startAddress, uint16_t endAddress)
-    {
-        printf("Printing memory starting at: %d\n", startAddress);
-
-        for (uint16_t i = startAddress; i < endAddress + 1; i++)
-        {
-            printf("%04x	%04x\n", i, read_memory(i));
         }
     }
 };	

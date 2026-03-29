@@ -66,6 +66,7 @@ public:
 	void setFlag(char flag, bool value);
 
 	void step();
+	void reset();
 
 	// check flags
 

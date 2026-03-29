@@ -145,6 +145,7 @@
     <ClInclude Include="KeyboardHandler.h" />
     <ClInclude Include="MMU.h" />
     <ClInclude Include="Renderer.h" />
+    <ClInclude Include="UI.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

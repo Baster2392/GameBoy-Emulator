@@ -690,6 +690,28 @@ void CPU::step()
 	std::this_thread::sleep_for(125ns);
 }
 
+void CPU::reset()
+{
+	A = B = C = D = E = H = L = F = 0;
+	SP = 0;
+	PC = 0x100;
+	IME = 0;
+	cycles = 0;
+
+	gpu.mode = 0;
+	gpu.mode_clock = 0;
+	gpu.line = 0;
+	gpu.ready_to_render = false;
+	gpu.lcdc = 0;
+	gpu.stat = 0;
+	gpu.scy = gpu.scx = 0;
+	gpu.lyc = 0;
+	gpu.bgp = 0;
+	gpu.obp0 = gpu.obp1 = 0;
+	gpu.wy = gpu.wx = 0;
+	memset(gpu.framebuffer, 0, sizeof(gpu.framebuffer));
+}
+
 bool CPU::Z_flag()
 {
 	return uint8_t(this->F) >= 0b10000000;
